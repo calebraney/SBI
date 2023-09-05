@@ -6,6 +6,27 @@ window.Webflow.push(() => {
   // Run code once webflow is initialized
   console.log('hello');
 });
+
+const setNavbar = function (pageWrap) {
+  const navbar = pageWrap.querySelector('.navbar_component');
+  let isTransparent;
+  if (navbar.getAttribute('navbar-light') === 'true') {
+    isTransparent = true;
+  } else {
+    isTransparent = false;
+  }
+  if (isTransparent) {
+    document.addEventListener('scroll', (event) => {
+      if (window.scrollY !== 0) {
+        navbar.setAttribute('navbar-light', 'false');
+      }
+      if (window.scrollY === 0) {
+        navbar.setAttribute('navbar-light', 'true');
+      }
+    });
+  }
+};
+
 //////////////////////////////
 // Barba JS Page transitions
 
@@ -30,7 +51,6 @@ function resetWebflow(data) {
 function makeItemActive(data) {
   // Get the name of the project
   const cmsPageName = data.next.container.querySelector(PROJECT_NAME).textContent;
-  console.log(cmsPageName);
   // If name of the project matches, add active class
   document.querySelectorAll('.w-dyn-item').forEach((item) => {
     if (
@@ -38,28 +58,30 @@ function makeItemActive(data) {
       item.querySelector(PROJECT_NAME).textContent === cmsPageName
     ) {
       item.classList.add(ACTIVE_CLASS);
-      console.log(item);
     }
   });
 }
 
-function flip(data) {
+function flip(outgoingWrap, incomingWrap) {
   //get elements
-  const activeCMSItem = data.current.container.querySelector(`.${ACTIVE_CLASS}`);
-  const outgoingImage = activeCMSItem.querySelector(PROJECT_IMAGE);
-  const incomingImage = data.next.container.querySelector(PROJECT_IMAGE);
-  const incomingImageWrap = data.next.container.querySelector(PROJECT_IMAGE_WRAP);
+  const outgoingImage = outgoingWrap.querySelector(PROJECT_IMAGE);
+  const incomingImage = incomingWrap.querySelector(PROJECT_IMAGE);
 
-  console.log(activeCMSItem, outgoingImage, incomingImage, incomingImageWrap);
+  //guard clause
+  if ((!outgoingImage, !incomingImage)) return;
+
   //set state for flip
   let state = Flip.getState(outgoingImage);
 
   //move image
-  incomingImageWrap.insertAdjacentElement('beforeend', outgoingImage);
+  incomingWrap.insertAdjacentElement('beforeend', outgoingImage);
   incomingImage.remove();
-  Flip.from(state, { duration: 0.8, ease: 'power1.inOut' });
+  Flip.from(state, { duration: 0.8, ease: 'power2.inOut' });
 }
-
+//Hooks
+barba.hooks.beforeEnter((data) => {
+  setNavbar(data.next.container);
+});
 // Run after each page transition
 barba.hooks.afterEnter((data) => {
   window.scrollTo(0, 0);
@@ -84,42 +106,39 @@ barba.init({
       name: 'opacity-transition',
       enter(data) {
         data.next.container.classList.add('fixed');
-        gsap.to(data.current.container, { opacity: 0, duration: 0.8 });
-        return gsap.from(data.next.container, { opacity: 0, duration: 0.8 });
+        gsap.to(data.current.container, { opacity: 0, duration: 0.6 });
+        return gsap.from(data.next.container, { opacity: 0, duration: 0.6 });
       },
     },
     {
-      // Home to Project Page Transition
+      // To Project Page
       sync: true,
       name: 'to-project',
-      from: { namespace: ['home'] },
+      from: { namespace: ['home', 'work', 'project'] },
       to: { namespace: ['project'] },
       enter(data) {
         makeItemActive(data);
         data.next.container.classList.add('fixed');
         // project title
-        flip(data);
+        flip(
+          data.current.container.querySelector(`.${ACTIVE_CLASS} ${PROJECT_IMAGE_WRAP}`),
+          data.next.container.querySelector(PROJECT_IMAGE_WRAP)
+        );
         gsap.from(data.next.container.querySelector(PROJECT_TITLE), {
           opacity: 0,
           y: '2rem',
           ease: 'power2.Out',
           duration: 0.6,
         });
-        //get image wrappers on old and new pages
-
-        //project image TEMPORARY
-        // gsap.from(data.next.container.querySelector(PROJECT_IMAGE), {
-        //   opacity: 0,
-        //   y: '100%',
-        //   ease: 'power1.Out',
-        //   delay: 0.2,
-        //   duration: 0.6,
-        // });
-        // flip(
-        //   data.current.container.querySelector(PROJECT_IMAGE_WRAP),
-        //   data.next.container.querySelector(PROJECT_IMAGE_WRAP)
-        // );
         return gsap.to(data.current.container, { opacity: 0, duration: 0.8 });
+      },
+    },
+  ],
+  views: [
+    {
+      namespace: 'home',
+      beforeEnter(data) {
+        // setNavbar(data.next.container);
       },
     },
   ],
