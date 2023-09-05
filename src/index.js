@@ -1,12 +1,5 @@
 import barba from '@barba/core';
 
-// Webflow is initialized
-window.Webflow ||= [];
-window.Webflow.push(() => {
-  // Run code once webflow is initialized
-  console.log('hello');
-});
-
 const setNavbar = function (pageWrap) {
   const navbar = pageWrap.querySelector('.navbar_component');
   let isTransparent;
@@ -37,6 +30,17 @@ const PROJECT_TITLE = '[data-barba="project-title"]';
 const PROJECT_IMAGE = '[data-barba="project-image"]';
 const PROJECT_IMAGE_WRAP = '[data-barba="project-image-wrap"]';
 
+//Create Scripts
+function appendScript(url) {
+  const script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src = url;
+  //test if script is duplicate
+  if (document.head.querySelector('script[src="' + src + '"]') == undefined) {
+    script.async = true;
+    document.head.append(script);
+  }
+}
 // Reset Webflow
 function resetWebflow(data) {
   let parser = new DOMParser();
@@ -62,7 +66,7 @@ function makeItemActive(data) {
   });
 }
 
-function flip(outgoingWrap, incomingWrap) {
+function flipProjectImage(outgoingWrap, incomingWrap) {
   //get elements
   const outgoingImage = outgoingWrap.querySelector(PROJECT_IMAGE);
   const incomingImage = incomingWrap.querySelector(PROJECT_IMAGE);
@@ -78,6 +82,7 @@ function flip(outgoingWrap, incomingWrap) {
   incomingImage.remove();
   Flip.from(state, { duration: 0.8, ease: 'power2.inOut' });
 }
+
 //Hooks
 barba.hooks.beforeEnter((data) => {
   setNavbar(data.next.container);
@@ -98,7 +103,6 @@ barba.hooks.after((data) => {
 
 barba.init({
   preventRunning: true,
-  debug: true,
   transitions: [
     {
       // General Page Transition
@@ -120,7 +124,7 @@ barba.init({
         makeItemActive(data);
         data.next.container.classList.add('fixed');
         // project title
-        flip(
+        flipProjectImage(
           data.current.container.querySelector(`.${ACTIVE_CLASS} ${PROJECT_IMAGE_WRAP}`),
           data.next.container.querySelector(PROJECT_IMAGE_WRAP)
         );
@@ -136,9 +140,12 @@ barba.init({
   ],
   views: [
     {
-      namespace: 'home',
-      beforeEnter(data) {
-        // setNavbar(data.next.container);
+      namespace: 'work',
+      after(data) {
+        // appendScript('https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsload@1/cmsload.js');
+        // appendScript('https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsnest@1/cmsnest.js');
+        // appendScript('https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsfilter@1/cmsfilter.js');
+        // console.log('scripts added');
       },
     },
   ],

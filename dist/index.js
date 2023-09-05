@@ -1021,10 +1021,6 @@
 
   // src/index.js
   var import_core = __toESM(require_barba_umd(), 1);
-  window.Webflow ||= [];
-  window.Webflow.push(() => {
-    console.log("hello");
-  });
   var setNavbar = function(pageWrap) {
     const navbar = pageWrap.querySelector(".navbar_component");
     let isTransparent;
@@ -1066,7 +1062,7 @@
       }
     });
   }
-  function flip(outgoingWrap, incomingWrap) {
+  function flipProjectImage(outgoingWrap, incomingWrap) {
     const outgoingImage = outgoingWrap.querySelector(PROJECT_IMAGE);
     const incomingImage = incomingWrap.querySelector(PROJECT_IMAGE);
     if (!outgoingImage, !incomingImage)
@@ -1092,7 +1088,6 @@
   });
   import_core.default.init({
     preventRunning: true,
-    debug: true,
     transitions: [
       {
         sync: true,
@@ -1111,7 +1106,7 @@
         enter(data) {
           makeItemActive(data);
           data.next.container.classList.add("fixed");
-          flip(
+          flipProjectImage(
             data.current.container.querySelector(`.${ACTIVE_CLASS} ${PROJECT_IMAGE_WRAP}`),
             data.next.container.querySelector(PROJECT_IMAGE_WRAP)
           );
@@ -1127,8 +1122,8 @@
     ],
     views: [
       {
-        namespace: "home",
-        beforeEnter(data) {
+        namespace: "work",
+        after(data) {
         }
       }
     ]
