@@ -9,36 +9,38 @@ window.Webflow.push(() => {
 function resetWebflow(data) {
   let parser = new DOMParser();
   let dom = parser.parseFromString(data.next.html, 'text/html');
-  let webflowPageId = $(dom).find('html').attr('data-wf-page');
-  $('html').attr('data-wf-page', webflowPageId);
+  let webflowPageId = dom.querySelector('html').getAttribute('data-wf-page');
+  document.documentElement.setAttribute('data-wf-page', webflowPageId);
   window.Webflow && window.Webflow.destroy();
   window.Webflow && window.Webflow.ready();
   window.Webflow && window.Webflow.require('ix2').init();
 }
 
 function makeItemActive(data) {
-  // get the name of the project
-  const cmsPageName = data.next.container.querySelector('[data-barba="project-name"]');
-  //if name of the project matches add active class
+  // Get the name of the project
+  const cmsPageName = data.next.container.querySelector('[data-barba="project-name"]').textContent;
+  // If name of the project matches, add active class
   document.querySelectorAll('.w-dyn-item').forEach((cmsitem) => {
-    if (this.querySelector('[data-barba="project-name"]').text() === cmsPageName) {
-      this.addClass('active-flip-item');
+    if (cmsitem.querySelector('[data-barba="project-name"]').textContent === cmsPageName) {
+      cmsitem.classList.add('active-flip-item');
     }
   });
 }
 
 function flip(outgoing, incoming) {
-  let state = Flip.getState(outgoing.find('.visual'));
-  incoming.find('.visual').remove();
-  outgoing.find('.visual').appendTo(incoming);
+  let state = Flip.getState(outgoing.querySelector('[data-barba="project-image"]'));
+  incoming.querySelector('[data-barba="project-image"]').remove();
+  incoming.appendChild(outgoing.querySelector('[data-barba="project-image"]'));
   Flip.from(state, { duration: 0.5, ease: 'power1.inOut' });
 }
 
-// run after each page transition
+// Run after each page transition
 barba.hooks.after((data) => {
-  $(data.next.container).removeClass('fixed');
-  $('.active-flip-item').removeClass('active-flip-item');
-  $(window).scrollTop(0);
+  data.next.container.classList.remove('fixed');
+  document.querySelectorAll('.active-flip-item').forEach((item) => {
+    item.classList.remove('active-flip-item');
+  });
+  window.scrollTo(0, 0);
   resetWebflow(data);
 });
 
@@ -50,8 +52,11 @@ barba.init({
       sync: true,
       enter(data) {
         makeItemActive(data);
-        $(data.next.container).addClass('fixed');
-        flip($('.active-flip-item'), $('.project-page_img-wrap'));
+        data.next.container.classList.add('fixed');
+        flip(
+          document.querySelector('.active-flip-item'),
+          document.querySelector('.project-page_img-wrap')
+        );
         return gsap.to(data.current.container, { opacity: 0, duration: 0.5 });
       },
     },
@@ -61,7 +66,7 @@ barba.init({
       from: { namespace: ['home-page'] },
       to: { namespace: ['project-page'] },
       enter(data) {
-        $(data.next.container).addClass('fixed');
+        data.next.container.classList.add('fixed');
         gsap.to(data.current.container, { opacity: 0, duration: 1 });
         return gsap.from(data.next.container, { opacity: 0, duration: 1 });
       },
@@ -73,10 +78,16 @@ barba.init({
       to: { namespace: ['home-page'] },
       enter(data) {
         makeItemActive(data);
-        createSwiper();
-        mySlider.slideTo($('.active-flip-item').index(), 0);
-        $(data.next.container).addClass('fixed');
-        flip($('.project-page_img-wrap'), $('.active-flip-item .visual_wrap'));
+        createSwiper(); // Assuming createSwiper is defined elsewhere
+        mySlider.slideTo(
+          Array.from(document.querySelectorAll('.active-flip-item')).indexOf(data.next.container),
+          0
+        );
+        data.next.container.classList.add('fixed');
+        flip(
+          document.querySelector('.project-page_img-wrap'),
+          document.querySelector('.active-flip-item .visual_wrap')
+        );
         return gsap.to(data.current.container, { opacity: 0, duration: 0.5 });
       },
     },
