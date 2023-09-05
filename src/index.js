@@ -1,11 +1,22 @@
+import barba from '@barba/core';
+
 // Webflow is initialized
 window.Webflow ||= [];
 window.Webflow.push(() => {
   // Run code once webflow is initialized
-  console.log('hello webflow');
+  console.log('hello');
 });
-
+//////////////////////////////
 // Barba JS Page transitions
+
+// Barba JS Global Variables
+const ACTIVE_CLASS = 'active-flip-item';
+const PROJECT_NAME = '[data-barba="project-name"]';
+const PROJECT_TITLE = '[data-barba="project-title"]';
+const PROJECT_IMAGE = '[data-barba="project-image"]';
+const PROJECT_IMAGE_WRAP = '[data-barba="project-image-wrap"]';
+
+// Reset Webflow
 function resetWebflow(data) {
   let parser = new DOMParser();
   let dom = parser.parseFromString(data.next.html, 'text/html');
@@ -18,27 +29,46 @@ function resetWebflow(data) {
 
 function makeItemActive(data) {
   // Get the name of the project
-  const cmsPageName = data.next.container.querySelector('[data-barba="project-name"]').textContent;
+  const cmsPageName = data.next.container.querySelector(PROJECT_NAME).textContent;
+  console.log(cmsPageName);
   // If name of the project matches, add active class
-  document.querySelectorAll('.w-dyn-item').forEach((cmsitem) => {
-    if (cmsitem.querySelector('[data-barba="project-name"]').textContent === cmsPageName) {
-      cmsitem.classList.add('active-flip-item');
+  document.querySelectorAll('.w-dyn-item').forEach((item) => {
+    if (
+      item.querySelector(PROJECT_NAME) &&
+      item.querySelector(PROJECT_NAME).textContent === cmsPageName
+    ) {
+      item.classList.add(ACTIVE_CLASS);
+      console.log(item);
     }
   });
 }
 
-function flip(outgoing, incoming) {
-  let state = Flip.getState(outgoing.querySelector('[data-barba="project-image"]'));
-  incoming.querySelector('[data-barba="project-image"]').remove();
-  incoming.appendChild(outgoing.querySelector('[data-barba="project-image"]'));
-  Flip.from(state, { duration: 0.5, ease: 'power1.inOut' });
+function flip(data) {
+  //get elements
+  const activeCMSItem = data.current.container.querySelector(`.${ACTIVE_CLASS}`);
+  const outgoingImage = activeCMSItem.querySelector(PROJECT_IMAGE);
+  const incomingImage = data.next.container.querySelector(PROJECT_IMAGE);
+  const incomingImageWrap = data.next.container.querySelector(PROJECT_IMAGE_WRAP);
+
+  console.log(activeCMSItem, outgoingImage, incomingImage, incomingImageWrap);
+  //set state for flip
+  let state = Flip.getState(outgoingImage);
+
+  //move image
+  incomingImageWrap.insertAdjacentElement('beforeend', outgoingImage);
+  incomingImage.remove();
+  Flip.from(state, { duration: 0.8, ease: 'power1.inOut' });
 }
 
 // Run after each page transition
+barba.hooks.afterEnter((data) => {
+  window.scrollTo(0, 0);
+});
 barba.hooks.after((data) => {
   data.next.container.classList.remove('fixed');
-  document.querySelectorAll('.active-flip-item').forEach((item) => {
-    item.classList.remove('active-flip-item');
+  //remove active class
+  document.querySelectorAll(`.${ACTIVE_CLASS}`).forEach((item) => {
+    item.classList.remove(ACTIVE_CLASS);
   });
   window.scrollTo(0, 0);
   resetWebflow(data);
@@ -46,49 +76,50 @@ barba.hooks.after((data) => {
 
 barba.init({
   preventRunning: true,
+  debug: true,
   transitions: [
     {
       // General Page Transition
       sync: true,
+      name: 'opacity-transition',
       enter(data) {
-        makeItemActive(data);
         data.next.container.classList.add('fixed');
-        flip(
-          document.querySelector('.active-flip-item'),
-          document.querySelector('.project-page_img-wrap')
-        );
-        return gsap.to(data.current.container, { opacity: 0, duration: 0.5 });
+        gsap.to(data.current.container, { opacity: 0, duration: 0.8 });
+        return gsap.from(data.next.container, { opacity: 0, duration: 0.8 });
       },
     },
     {
-      // Home to Work Page Transition
+      // Home to Project Page Transition
       sync: true,
-      from: { namespace: ['home-page'] },
-      to: { namespace: ['project-page'] },
-      enter(data) {
-        data.next.container.classList.add('fixed');
-        gsap.to(data.current.container, { opacity: 0, duration: 1 });
-        return gsap.from(data.next.container, { opacity: 0, duration: 1 });
-      },
-    },
-    {
-      // Home to Work Page Transition
-      sync: true,
-      from: { namespace: ['project-page'] },
-      to: { namespace: ['home-page'] },
+      name: 'to-project',
+      from: { namespace: ['home'] },
+      to: { namespace: ['project'] },
       enter(data) {
         makeItemActive(data);
-        createSwiper(); // Assuming createSwiper is defined elsewhere
-        mySlider.slideTo(
-          Array.from(document.querySelectorAll('.active-flip-item')).indexOf(data.next.container),
-          0
-        );
         data.next.container.classList.add('fixed');
-        flip(
-          document.querySelector('.project-page_img-wrap'),
-          document.querySelector('.active-flip-item .visual_wrap')
-        );
-        return gsap.to(data.current.container, { opacity: 0, duration: 0.5 });
+        // project title
+        flip(data);
+        gsap.from(data.next.container.querySelector(PROJECT_TITLE), {
+          opacity: 0,
+          y: '2rem',
+          ease: 'power2.Out',
+          duration: 0.6,
+        });
+        //get image wrappers on old and new pages
+
+        //project image TEMPORARY
+        // gsap.from(data.next.container.querySelector(PROJECT_IMAGE), {
+        //   opacity: 0,
+        //   y: '100%',
+        //   ease: 'power1.Out',
+        //   delay: 0.2,
+        //   duration: 0.6,
+        // });
+        // flip(
+        //   data.current.container.querySelector(PROJECT_IMAGE_WRAP),
+        //   data.next.container.querySelector(PROJECT_IMAGE_WRAP)
+        // );
+        return gsap.to(data.current.container, { opacity: 0, duration: 0.8 });
       },
     },
   ],
