@@ -1045,6 +1045,22 @@
   var PROJECT_TITLE = '[data-barba="project-title"]';
   var PROJECT_IMAGE = '[data-barba="project-image"]';
   var PROJECT_IMAGE_WRAP = '[data-barba="project-image-wrap"]';
+  function appendScript(url) {
+    const script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src = url;
+    document.head.append(script);
+  }
+  function appendCMSFilters() {
+    appendScript("https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsload@1/cmsload.js");
+    appendScript("https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsnest@1/cmsnest.js");
+    appendScript("https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsfilter@1/cmsfilter.js");
+  }
+  function defaultTransition(data) {
+    data.next.container.classList.add("fixed");
+    gsap.to(data.current.container, { opacity: 0, duration: 0.6 });
+    return gsap.from(data.next.container, { opacity: 0, duration: 0.6 });
+  }
   function resetWebflow(data) {
     let parser = new DOMParser();
     let dom = parser.parseFromString(data.next.html, "text/html");
@@ -1093,9 +1109,7 @@
         sync: true,
         name: "opacity-transition",
         enter(data) {
-          data.next.container.classList.add("fixed");
-          gsap.to(data.current.container, { opacity: 0, duration: 0.6 });
-          return gsap.from(data.next.container, { opacity: 0, duration: 0.6 });
+          defaultTransition(data);
         }
       },
       {
@@ -1118,12 +1132,48 @@
           });
           return gsap.to(data.current.container, { opacity: 0, duration: 0.8 });
         }
-      }
-    ],
-    views: [
+      },
       {
-        namespace: "work",
+        sync: true,
+        to: { namespace: ["home"] },
+        once(data) {
+          appendScript("https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsslider@1/cmsslider.js");
+        },
+        enter(data) {
+          defaultTransition(data);
+        },
         after(data) {
+          appendScript("https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsslider@1/cmsslider.js");
+        }
+      },
+      {
+        sync: true,
+        to: { namespace: ["work"] },
+        once(data) {
+          appendCMSFilters();
+          console.log("before enter work");
+        },
+        enter(data) {
+          defaultTransition(data);
+        },
+        after(data) {
+          appendCMSFilters();
+          console.log("after work");
+        }
+      },
+      {
+        sync: true,
+        to: { namespace: ["blog"] },
+        once(data) {
+          appendCMSFilters();
+          console.log("before enter blog");
+        },
+        enter(data) {
+          defaultTransition(data);
+        },
+        after(data) {
+          appendCMSFilters();
+          console.log("after blog");
         }
       }
     ]

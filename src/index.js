@@ -35,11 +35,20 @@ function appendScript(url) {
   const script = document.createElement('script');
   script.type = 'text/javascript';
   script.src = url;
-  //test if script is duplicate
-  if (document.head.querySelector('script[src="' + src + '"]') == undefined) {
-    script.async = true;
-    document.head.append(script);
-  }
+  document.head.append(script);
+  //or try data.next.container
+}
+// create Finsweet CMS filter scripts
+function appendCMSFilters() {
+  appendScript('https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsload@1/cmsload.js');
+  appendScript('https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsnest@1/cmsnest.js');
+  appendScript('https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsfilter@1/cmsfilter.js');
+}
+// Default Page Transition
+function defaultTransition(data) {
+  data.next.container.classList.add('fixed');
+  gsap.to(data.current.container, { opacity: 0, duration: 0.6 });
+  return gsap.from(data.next.container, { opacity: 0, duration: 0.6 });
 }
 // Reset Webflow
 function resetWebflow(data) {
@@ -70,13 +79,10 @@ function flipProjectImage(outgoingWrap, incomingWrap) {
   //get elements
   const outgoingImage = outgoingWrap.querySelector(PROJECT_IMAGE);
   const incomingImage = incomingWrap.querySelector(PROJECT_IMAGE);
-
   //guard clause
   if ((!outgoingImage, !incomingImage)) return;
-
   //set state for flip
   let state = Flip.getState(outgoingImage);
-
   //move image
   incomingWrap.insertAdjacentElement('beforeend', outgoingImage);
   incomingImage.remove();
@@ -109,9 +115,7 @@ barba.init({
       sync: true,
       name: 'opacity-transition',
       enter(data) {
-        data.next.container.classList.add('fixed');
-        gsap.to(data.current.container, { opacity: 0, duration: 0.6 });
-        return gsap.from(data.next.container, { opacity: 0, duration: 0.6 });
+        defaultTransition(data);
       },
     },
     {
@@ -137,15 +141,50 @@ barba.init({
         return gsap.to(data.current.container, { opacity: 0, duration: 0.8 });
       },
     },
-  ],
-  views: [
     {
-      namespace: 'work',
+      // Home Page Transition
+      sync: true,
+      to: { namespace: ['home'] },
+      once(data) {
+        appendScript('https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsslider@1/cmsslider.js');
+      },
+      enter(data) {
+        defaultTransition(data);
+      },
       after(data) {
-        // appendScript('https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsload@1/cmsload.js');
-        // appendScript('https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsnest@1/cmsnest.js');
-        // appendScript('https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsfilter@1/cmsfilter.js');
-        // console.log('scripts added');
+        appendScript('https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsslider@1/cmsslider.js');
+      },
+    },
+    {
+      // Work Page Transition
+      sync: true,
+      to: { namespace: ['work'] },
+      once(data) {
+        appendCMSFilters();
+        console.log('before enter work');
+      },
+      enter(data) {
+        defaultTransition(data);
+      },
+      after(data) {
+        appendCMSFilters();
+        console.log('after work');
+      },
+    },
+    {
+      // Blog Page Transition
+      sync: true,
+      to: { namespace: ['blog'] },
+      once(data) {
+        appendCMSFilters();
+        console.log('before enter blog');
+      },
+      enter(data) {
+        defaultTransition(data);
+      },
+      after(data) {
+        appendCMSFilters();
+        console.log('after blog');
       },
     },
   ],
