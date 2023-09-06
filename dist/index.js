@@ -1151,14 +1151,12 @@
         to: { namespace: ["work"] },
         once(data) {
           appendCMSFilters();
-          console.log("before enter work");
         },
         enter(data) {
           defaultTransition(data);
         },
         after(data) {
           appendCMSFilters();
-          console.log("after work");
         }
       },
       {
@@ -1166,14 +1164,12 @@
         to: { namespace: ["blog"] },
         once(data) {
           appendCMSFilters();
-          console.log("before enter blog");
         },
         enter(data) {
           defaultTransition(data);
         },
         after(data) {
           appendCMSFilters();
-          console.log("after blog");
         }
       }
     ]

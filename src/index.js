@@ -38,18 +38,21 @@ function appendScript(url) {
   document.head.append(script);
   //or try data.next.container
 }
-// create Finsweet CMS filter scripts
+
+// Create Finsweet CMS filter scripts
 function appendCMSFilters() {
   appendScript('https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsload@1/cmsload.js');
   appendScript('https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsnest@1/cmsnest.js');
   appendScript('https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsfilter@1/cmsfilter.js');
 }
+
 // Default Page Transition
 function defaultTransition(data) {
   data.next.container.classList.add('fixed');
   gsap.to(data.current.container, { opacity: 0, duration: 0.6 });
   return gsap.from(data.next.container, { opacity: 0, duration: 0.6 });
 }
+
 // Reset Webflow
 function resetWebflow(data) {
   let parser = new DOMParser();
@@ -127,7 +130,6 @@ barba.init({
       enter(data) {
         makeItemActive(data);
         data.next.container.classList.add('fixed');
-        // project title
         flipProjectImage(
           data.current.container.querySelector(`.${ACTIVE_CLASS} ${PROJECT_IMAGE_WRAP}`),
           data.next.container.querySelector(PROJECT_IMAGE_WRAP)
@@ -161,14 +163,12 @@ barba.init({
       to: { namespace: ['work'] },
       once(data) {
         appendCMSFilters();
-        console.log('before enter work');
       },
       enter(data) {
         defaultTransition(data);
       },
       after(data) {
         appendCMSFilters();
-        console.log('after work');
       },
     },
     {
@@ -177,14 +177,12 @@ barba.init({
       to: { namespace: ['blog'] },
       once(data) {
         appendCMSFilters();
-        console.log('before enter blog');
       },
       enter(data) {
         defaultTransition(data);
       },
       after(data) {
         appendCMSFilters();
-        console.log('after blog');
       },
     },
   ],
