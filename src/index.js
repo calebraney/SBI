@@ -140,6 +140,13 @@ barba.init({
           ease: 'power2.Out',
           duration: 0.6,
         });
+        gsap.from(data.next.container.querySelector('.case-overview_component'), {
+          opacity: 0,
+          y: '2rem',
+          ease: 'power2.Out',
+          delay: 0.2,
+          duration: 0.6,
+        });
         return gsap.to(data.current.container, { opacity: 0, duration: 0.8 });
       },
     },
