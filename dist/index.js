@@ -1161,26 +1161,26 @@
       return null;
     }
     const id = owner[expando] || (owner[expando] = ++uid);
-    const data2 = cache[id] || (cache[id] = {});
+    const data = cache[id] || (cache[id] = {});
     if (value === void 0) {
       if (!!key && Object.getPrototypeOf(key) === Object.prototype) {
         cache[id] = {
-          ...data2,
+          ...data,
           ...key
         };
       }
     } else if (key !== void 0) {
-      data2[key] = value;
+      data[key] = value;
     }
     return value;
   }
   function get(owner, key) {
     const id = isObject(owner) ? owner[expando] : null;
-    const data2 = id && cache[id] || {};
+    const data = id && cache[id] || {};
     if (key === void 0) {
-      return data2;
+      return data;
     }
-    return data2[key];
+    return data[key];
   }
   function remove(element) {
     const id = element && element[expando];
@@ -1628,72 +1628,120 @@
   // src/index.js
   console.log("dev loaded");
   var typeSplit;
-  var scroller;
-  var items;
+  var mm = gsap.matchMedia();
   var SCROLL_TEXT = '[gsap-scroll="text"]';
+  var LOAD_H1 = '[gsap-load="h1"]';
+  var LOAD_EL = '[gsap-load="el"]';
   var ACTIVE_CLASS = "active-flip-item";
   var PROJECT_NAME = '[data-barba="project-name"]';
   var PROJECT_TITLE = '[data-barba="project-title"]';
   var PROJECT_IMAGE = '[data-barba="project-image"]';
   var PROJECT_IMAGE_WRAP = '[data-barba="project-image-wrap"]';
-  function runSplit() {
-    typeSplit = new SplitType(SCROLL_TEXT, {
+  function runSplit(text) {
+    typeSplit = new SplitType(text, {
       types: "lines, words"
     });
+    return typeSplit;
   }
-  var textScrollIn = function() {
-    items = document.querySelectorAll(SCROLL_TEXT);
+  var headerLoad = function(data) {
+    const h1 = data.next.container.querySelector(LOAD_H1);
+    const elements = data.next.container.querySelectorAll(LOAD_EL);
+    const splitText = runSplit(h1);
+    if (!h1)
+      return;
+    const tl = gsap.timeline({});
+    tl.set(h1, { opacity: 1 });
+    tl.from(splitText.words, {
+      opacity: 0,
+      y: "2rem",
+      duration: 0.8,
+      ease: "power1.out",
+      stagger: { each: 0.05, from: "start" }
+    });
+    tl.fromTo(
+      elements,
+      {
+        opacity: 0,
+        y: "2rem"
+      },
+      {
+        opacity: 1,
+        y: "0rem",
+        duration: 0.8,
+        ease: "power1.out",
+        stagger: { each: 0.2, from: "start" }
+      },
+      "-=.6"
+    );
+  };
+  var textScrollIn = function(data) {
+    const items = data.next.container.querySelectorAll(SCROLL_TEXT);
     items.forEach((item) => {
-      const words = item.querySelectorAll(".word");
-      if (words.length === 0)
+      const splitText = runSplit(item);
+      console.log(splitText);
+      if (splitText)
         return;
       const tl = gsap.timeline({
-        defaults: {
-          duration: 0.8,
-          ease: "power2.out"
+        scrollTrigger: {
+          trigger: item,
+          start: "top 15%",
+          end: "top 20%",
+          toggleActions: "play none none restart"
         }
       });
-      tl.from(words, {
-        opacity: 0,
-        yPercent: -50,
-        stagger: { each: 0.05, from: "end" }
-      });
-      scroller = ScrollTrigger.create({
-        trigger: item,
-        animation: tl,
-        start: "top 15%",
-        end: "top 20%",
-        toggleActions: "play none none restart"
-      });
-      console.log(scroller);
+      tl.fromTo(
+        splitText.words,
+        {
+          opacity: 0,
+          y: "2rem"
+        },
+        {
+          opacity: 1,
+          y: "0rem",
+          duration: 0.8,
+          ease: "power2.out",
+          stagger: { each: 0.05, from: "start" }
+        }
+      );
     });
   };
-  var pageReset = function() {
-    textScrollIn();
-    mm.add("(min-width: 992px)", () => {
-      setNavbar(data.next.container);
-      return () => {
-      };
-    });
-    let windowWidth = window.innerWidth;
-    window.addEventListener("resize", function() {
-      if (window.innerWidth !== windowWidth) {
-        windowWidth = window.innerWidth;
-        console.log(typeSplit);
-        typeSplit.revert();
-        runSplit();
+  var pageReset = function(data) {
+    mm.add(
+      {
+        isMobile: "(max-width: 767px)",
+        isTablet: "(min-width: 768px)  and (max-width: 991px)",
+        isDesktop: "(min-width: 992px)",
+        reduceMotion: "(prefers-reduced-motion: reduce)"
+      },
+      (context) => {
+        let { isMobile, isTablet, isDesktop, reduceMotion } = context.conditions;
+        headerLoad(data);
+        textScrollIn(data);
+        setNavbar(data.next.container, isDesktop);
+        if (isMobile) {
+        }
       }
-    });
+    );
   };
-  var setNavbar = function(pageWrap) {
+  var windowWidth = window.innerWidth;
+  window.addEventListener("resize", function() {
+    if (window.innerWidth !== windowWidth) {
+      windowWidth = window.innerWidth;
+      gsap.matchMediaRefresh();
+    }
+  });
+  var setNavbar = function(pageWrap, isDesktop) {
     const navbar = pageWrap.querySelector(".navbar_component");
     let isTransparent;
-    if (navbar.getAttribute("navbar-light") === "true") {
+    if (navbar.getAttribute("navbar-transparent") === "true") {
       isTransparent = true;
     } else {
       isTransparent = false;
     }
-    if (isTransparent) {
+    if (isTransparent && isDesktop) {
+      if (window.scrollY === 0) {
+        navbar.setAttribute("navbar-light", "true");
+      }
       document.addEventListener("scroll", (event) => {
         if (window.scrollY !== 0) {
           navbar.setAttribute("navbar-light", "false");
@@ -1702,6 +1750,8 @@
           navbar.setAttribute("navbar-light", "true");
         }
       });
+    } else {
+      navbar.setAttribute("navbar-light", "false");
     }
   };
   function appendScript(url) {
@@ -1715,22 +1765,22 @@
     appendScript("https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsnest@1/cmsnest.js");
     appendScript("https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsfilter@1/cmsfilter.js");
   }
-  function defaultTransition(data2) {
-    data2.next.container.classList.add("fixed");
-    gsap.to(data2.current.container, { opacity: 0, duration: 1, ease: "power1.in" });
-    return gsap.from(data2.next.container, { opacity: 0, duration: 1, ease: "power1.in" });
+  function defaultTransition(data) {
+    data.next.container.classList.add("fixed");
+    gsap.to(data.current.container, { opacity: 0, duration: 1, ease: "power1.in" });
+    return gsap.from(data.next.container, { opacity: 0, duration: 1, ease: "power1.out" });
   }
-  function resetWebflow(data2) {
+  function resetWebflow(data) {
     let parser = new DOMParser();
-    let dom = parser.parseFromString(data2.next.html, "text/html");
+    let dom = parser.parseFromString(data.next.html, "text/html");
     let webflowPageId = dom.querySelector("html").getAttribute("data-wf-page");
     document.documentElement.setAttribute("data-wf-page", webflowPageId);
     window.Webflow && window.Webflow.destroy();
     window.Webflow && window.Webflow.ready();
     window.Webflow && window.Webflow.require("ix2").init();
   }
-  function makeItemActive(data2) {
-    const cmsPageName = data2.next.container.querySelector(PROJECT_NAME).textContent;
+  function makeItemActive(data) {
+    const cmsPageName = data.next.container.querySelector(PROJECT_NAME).textContent;
     document.querySelectorAll(".w-dyn-item").forEach((item) => {
       if (item.querySelector(PROJECT_NAME) && item.querySelector(PROJECT_NAME).textContent === cmsPageName) {
         item.classList.add(ACTIVE_CLASS);
@@ -1747,23 +1797,23 @@
     incomingImage.remove();
     Flip.from(state, { duration: 0.8, ease: "power2.inOut" });
   }
-  import_core.default.hooks.once((data2) => {
-    pageReset();
+  import_core.default.hooks.once((data) => {
+    pageReset(data);
   });
-  import_core.default.hooks.beforeEnter((data2) => {
-    pageReset();
+  import_core.default.hooks.beforeEnter((data) => {
+    pageReset(data);
   });
-  import_core.default.hooks.afterEnter((data2) => {
+  import_core.default.hooks.afterEnter((data) => {
     window.scrollTo(0, 0);
-    pageReset();
+    pageReset(data);
   });
-  import_core.default.hooks.after((data2) => {
-    data2.next.container.classList.remove("fixed");
+  import_core.default.hooks.after((data) => {
+    data.next.container.classList.remove("fixed");
     document.querySelectorAll(`.${ACTIVE_CLASS}`).forEach((item) => {
       item.classList.remove(ACTIVE_CLASS);
     });
     window.scrollTo(0, 0);
-    resetWebflow(data2);
+    resetWebflow(data);
   });
   import_core.default.init({
     preventRunning: true,
@@ -1771,8 +1821,8 @@
       {
         sync: true,
         name: "opacity-transition",
-        enter(data2) {
-          defaultTransition(data2);
+        enter(data) {
+          defaultTransition(data);
         }
       },
       {
@@ -1780,65 +1830,72 @@
         name: "to-project",
         from: { namespace: ["home", "work", "project"] },
         to: { namespace: ["project"] },
-        enter(data2) {
-          makeItemActive(data2);
-          data2.next.container.classList.add("fixed");
+        enter(data) {
+          makeItemActive(data);
+          data.next.container.classList.add("fixed");
           flipProjectImage(
-            data2.current.container.querySelector(`.${ACTIVE_CLASS} ${PROJECT_IMAGE_WRAP}`),
-            data2.next.container.querySelector(PROJECT_IMAGE_WRAP)
+            data.current.container.querySelector(`.${ACTIVE_CLASS} ${PROJECT_IMAGE_WRAP}`),
+            data.next.container.querySelector(PROJECT_IMAGE_WRAP)
           );
-          gsap.from(data2.next.container.querySelector(PROJECT_TITLE), {
+          gsap.from(data.next.container.querySelector(PROJECT_TITLE), {
             opacity: 0,
             y: "2rem",
             ease: "power2.Out",
             duration: 0.6
           });
-          gsap.from(data2.next.container.querySelector(".case-overview_component"), {
+          gsap.from(data.next.container.querySelector(".case-overview_component"), {
             opacity: 0,
             y: "2rem",
             ease: "power2.Out",
             delay: 0.2,
             duration: 0.6
           });
-          return gsap.to(data2.current.container, { opacity: 0, duration: 0.8 });
+          return gsap.to(data.current.container, { opacity: 0, duration: 0.8 });
         }
       },
       {
         sync: true,
         to: { namespace: ["home"] },
-        once(data2) {
+        once(data) {
           appendScript("https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsslider@1/cmsslider.js");
         },
-        enter(data2) {
-          defaultTransition(data2);
+        enter(data) {
+          defaultTransition(data);
         },
-        after(data2) {
+        after(data) {
           appendScript("https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsslider@1/cmsslider.js");
         }
       },
       {
         sync: true,
+        to: { namespace: ["about"] },
+        enter(data) {
+          defaultTransition(data);
+        }
+      },
+      {
+        sync: true,
         to: { namespace: ["work"] },
-        once(data2) {
+        once(data) {
           appendCMSFilters();
         },
-        enter(data2) {
-          defaultTransition(data2);
+        enter(data) {
+          defaultTransition(data);
         },
-        after(data2) {
+        after(data) {
           appendCMSFilters();
         }
       },
       {
         sync: true,
         to: { namespace: ["blog"] },
-        once(data2) {
+        once(data) {
           appendCMSFilters();
         },
-        enter(data2) {
-          defaultTransition(data2);
+        enter(data) {
+          defaultTransition(data);
         },
-        after(data2) {
+        after(data) {
           appendCMSFilters();
         }
       }

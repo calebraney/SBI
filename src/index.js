@@ -9,9 +9,11 @@ console.log('dev loaded');
 // define variable for global use
 let typeSplit;
 let scroller;
-let items;
+let mm = gsap.matchMedia();
 //GSAP Selectors
 const SCROLL_TEXT = '[gsap-scroll="text"]';
+const LOAD_H1 = '[gsap-load="h1"]';
+const LOAD_EL = '[gsap-load="el"]';
 // Barba JS Global Variables
 const ACTIVE_CLASS = 'active-flip-item';
 const PROJECT_NAME = '[data-barba="project-name"]';
@@ -21,73 +23,141 @@ const PROJECT_IMAGE_WRAP = '[data-barba="project-image-wrap"]';
 
 //////////////////////////////
 // GSAP Animations
-function runSplit() {
-  typeSplit = new SplitType(SCROLL_TEXT, {
+function runSplit(text) {
+  typeSplit = new SplitType(text, {
     types: 'lines, words',
   });
+  return typeSplit;
 }
+const headerLoad = function (data) {
+  const h1 = data.next.container.querySelector(LOAD_H1);
+  const elements = data.next.container.querySelectorAll(LOAD_EL);
+  const splitText = runSplit(h1);
+  if (!h1) return;
+  const tl = gsap.timeline({});
+  tl.set(h1, { opacity: 1 });
+  tl.from(splitText.words, {
+    opacity: 0,
+    y: '2rem',
+    duration: 0.8,
+    ease: 'power1.out',
+    stagger: { each: 0.05, from: 'start' },
+  });
+  tl.fromTo(
+    elements,
+    {
+      opacity: 0,
+      y: '2rem',
+    },
+    {
+      opacity: 1,
+      y: '0rem',
+      duration: 0.8,
+      ease: 'power1.out',
+      stagger: { each: 0.2, from: 'start' },
+    },
+    '-=.6'
+  );
+  // Play the animation if the window is not being resized
+  // if (!pageResize) {
+  //   tl.play();
+  // }
+};
 
-const textScrollIn = function () {
-  items = document.querySelectorAll(SCROLL_TEXT);
+const textScrollIn = function (data) {
+  const items = data.next.container.querySelectorAll(SCROLL_TEXT);
   items.forEach((item) => {
-    const words = item.querySelectorAll('.word');
-    if (words.length === 0) return;
+    const splitText = runSplit(item);
+    console.log(splitText);
+    if (splitText) return;
     const tl = gsap.timeline({
-      defaults: {
-        duration: 0.8,
-        ease: 'power2.out',
+      // paused: true,
+      scrollTrigger: {
+        trigger: item,
+        start: 'top 15%',
+        end: 'top 20%',
+        toggleActions: 'play none none restart',
       },
     });
-    tl.from(words, {
-      opacity: 0,
-      yPercent: -50,
-      stagger: { each: 0.05, from: 'end' },
+    tl.fromTo(
+      splitText.words,
+      {
+        opacity: 0,
+        y: '2rem',
+      },
+      {
+        opacity: 1,
+        y: '0rem',
+        duration: 0.8,
+        ease: 'power2.out',
+        stagger: { each: 0.05, from: 'start' },
+      }
+    );
+    // Play the animation if the window is not being resized
+    // if (!pageResize) {
+    //   tl.play();
+    // }
+  });
+};
+const countUp = function () {
+  const numberText = document.querySelectorAll('.numbers_number');
+  if (numberText.length === 0) return;
+  numberText.forEach((number) => {
+    number.counterUp({
+      delay: 10,
+      time: 2000,
     });
-    scroller = ScrollTrigger.create({
-      trigger: item,
-      animation: tl,
-      start: 'top 15%',
-      end: 'top 20%',
-      toggleActions: 'play none none restart',
-    });
-    console.log(scroller);
   });
 };
 
 // Run these scripts on page reset
-const pageReset = function () {
-  //GSAP Animations
-  textScrollIn();
-  // gsap media query will only run on desktop
-  mm.add('(min-width: 992px)', () => {
-    setNavbar(data.next.container);
-    return () => {};
-  });
-  // Update on window resize
-  let windowWidth = window.innerWidth;
-  window.addEventListener('resize', function () {
-    if (window.innerWidth !== windowWidth) {
-      windowWidth = window.innerWidth;
-      //input code you want run after the browser width is changed
-      console.log(typeSplit);
-      typeSplit.revert();
-      runSplit();
+const pageReset = function (data) {
+  mm.add(
+    {
+      //This is the conditions object
+      isMobile: '(max-width: 767px)',
+      isTablet: '(min-width: 768px)  and (max-width: 991px)',
+      isDesktop: '(min-width: 992px)',
+      reduceMotion: '(prefers-reduced-motion: reduce)',
+    },
+    (context) => {
+      let { isMobile, isTablet, isDesktop, reduceMotion } = context.conditions;
+      //Global Animations
+      headerLoad(data);
+      textScrollIn(data);
+      setNavbar(data.next.container, isDesktop);
+      if (isMobile) {
+        //Run Mobile Code
+      }
     }
-  });
+  );
 };
+
+// Update on window resize
+let windowWidth = window.innerWidth;
+window.addEventListener('resize', function () {
+  if (window.innerWidth !== windowWidth) {
+    windowWidth = window.innerWidth;
+    gsap.matchMediaRefresh();
+  }
+});
 
 //////////////////////////////
 // Other Functions
 
-const setNavbar = function (pageWrap) {
+const setNavbar = function (pageWrap, isDesktop) {
   const navbar = pageWrap.querySelector('.navbar_component');
   let isTransparent;
-  if (navbar.getAttribute('navbar-light') === 'true') {
+
+  if (navbar.getAttribute('navbar-transparent') === 'true') {
     isTransparent = true;
   } else {
     isTransparent = false;
   }
-  if (isTransparent) {
+  if (isTransparent && isDesktop) {
+    if (window.scrollY === 0) {
+      navbar.setAttribute('navbar-light', 'true');
+    }
     document.addEventListener('scroll', (event) => {
       if (window.scrollY !== 0) {
         navbar.setAttribute('navbar-light', 'false');
@@ -96,6 +166,8 @@ const setNavbar = function (pageWrap) {
         navbar.setAttribute('navbar-light', 'true');
       }
     });
+  } else {
+    navbar.setAttribute('navbar-light', 'false');
   }
 };
 
@@ -122,7 +194,7 @@ function appendCMSFilters() {
 function defaultTransition(data) {
   data.next.container.classList.add('fixed');
   gsap.to(data.current.container, { opacity: 0, duration: 1, ease: 'power1.in' });
-  return gsap.from(data.next.container, { opacity: 0, duration: 1, ease: 'power1.in' });
+  return gsap.from(data.next.container, { opacity: 0, duration: 1, ease: 'power1.out' });
 }
 
 // Reset Webflow
@@ -166,15 +238,15 @@ function flipProjectImage(outgoingWrap, incomingWrap) {
 
 //Hooks
 barba.hooks.once((data) => {
-  pageReset();
+  pageReset(data);
 });
 barba.hooks.beforeEnter((data) => {
-  pageReset();
+  pageReset(data);
 });
 // Run after each page transition
 barba.hooks.afterEnter((data) => {
   window.scrollTo(0, 0);
-  pageReset();
+  pageReset(data);
 });
 barba.hooks.after((data) => {
   data.next.container.classList.remove('fixed');
@@ -238,6 +310,14 @@ barba.init({
       },
       after(data) {
         appendScript('https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsslider@1/cmsslider.js');
+      },
+    },
+    {
+      // About Page Transition
+      sync: true,
+      to: { namespace: ['about'] },
+      enter(data) {
+        defaultTransition(data);
       },
     },
     {
