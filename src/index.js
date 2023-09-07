@@ -67,18 +67,20 @@ const headerLoad = function (data) {
 const textScrollIn = function (data) {
   const items = data.next.container.querySelectorAll(SCROLL_TEXT);
   items.forEach((item) => {
+    item.style.opacity = 1;
     const splitText = runSplit(item);
     console.log(splitText);
     if (splitText) return;
     const tl = gsap.timeline({
-      // paused: true,
       scrollTrigger: {
         trigger: item,
         start: 'top 15%',
         end: 'top 20%',
-        toggleActions: 'play none none restart',
+        scrub: 0.5,
+        // toggleActions: 'play none none restart',
       },
     });
+    // tl.set(item, { opacity: 1 });
     tl.fromTo(
       splitText.words,
       {
@@ -206,6 +208,7 @@ function resetWebflow(data) {
   window.Webflow && window.Webflow.destroy();
   window.Webflow && window.Webflow.ready();
   window.Webflow && window.Webflow.require('ix2').init();
+  ScrollTrigger.clearScrollMemory();
 }
 
 function makeItemActive(data) {
