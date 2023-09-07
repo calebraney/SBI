@@ -1,4 +1,83 @@
 import barba from '@barba/core';
+import SplitType from 'split-type';
+
+console.log('dev loaded');
+
+//////////////////////////////
+// Global Variables
+
+// define variable for global use
+let typeSplit;
+let scroller;
+let items;
+//GSAP Selectors
+const SCROLL_TEXT = '[gsap-scroll="text"]';
+// Barba JS Global Variables
+const ACTIVE_CLASS = 'active-flip-item';
+const PROJECT_NAME = '[data-barba="project-name"]';
+const PROJECT_TITLE = '[data-barba="project-title"]';
+const PROJECT_IMAGE = '[data-barba="project-image"]';
+const PROJECT_IMAGE_WRAP = '[data-barba="project-image-wrap"]';
+
+//////////////////////////////
+// GSAP Animations
+function runSplit() {
+  typeSplit = new SplitType(SCROLL_TEXT, {
+    types: 'lines, words',
+  });
+}
+
+const textScrollIn = function () {
+  items = document.querySelectorAll(SCROLL_TEXT);
+  items.forEach((item) => {
+    const words = item.querySelectorAll('.word');
+    if (words.length === 0) return;
+    const tl = gsap.timeline({
+      defaults: {
+        duration: 0.8,
+        ease: 'power2.out',
+      },
+    });
+    tl.from(words, {
+      opacity: 0,
+      yPercent: -50,
+      stagger: { each: 0.05, from: 'end' },
+    });
+    scroller = ScrollTrigger.create({
+      trigger: item,
+      animation: tl,
+      start: 'top 15%',
+      end: 'top 20%',
+      toggleActions: 'play none none restart',
+    });
+    console.log(scroller);
+  });
+};
+
+// Run these scripts on page reset
+const pageReset = function () {
+  //GSAP Animations
+  textScrollIn();
+  // gsap media query will only run on desktop
+  mm.add('(min-width: 992px)', () => {
+    setNavbar(data.next.container);
+    return () => {};
+  });
+  // Update on window resize
+  let windowWidth = window.innerWidth;
+  window.addEventListener('resize', function () {
+    if (window.innerWidth !== windowWidth) {
+      windowWidth = window.innerWidth;
+      //input code you want run after the browser width is changed
+      console.log(typeSplit);
+      typeSplit.revert();
+      runSplit();
+    }
+  });
+};
+
+//////////////////////////////
+// Other Functions
 
 const setNavbar = function (pageWrap) {
   const navbar = pageWrap.querySelector('.navbar_component');
@@ -23,13 +102,6 @@ const setNavbar = function (pageWrap) {
 //////////////////////////////
 // Barba JS Page transitions
 
-// Barba JS Global Variables
-const ACTIVE_CLASS = 'active-flip-item';
-const PROJECT_NAME = '[data-barba="project-name"]';
-const PROJECT_TITLE = '[data-barba="project-title"]';
-const PROJECT_IMAGE = '[data-barba="project-image"]';
-const PROJECT_IMAGE_WRAP = '[data-barba="project-image-wrap"]';
-
 //Create Scripts
 function appendScript(url) {
   const script = document.createElement('script');
@@ -49,8 +121,8 @@ function appendCMSFilters() {
 // Default Page Transition
 function defaultTransition(data) {
   data.next.container.classList.add('fixed');
-  gsap.to(data.current.container, { opacity: 0, duration: 0.6 });
-  return gsap.from(data.next.container, { opacity: 0, duration: 0.6 });
+  gsap.to(data.current.container, { opacity: 0, duration: 1, ease: 'power1.in' });
+  return gsap.from(data.next.container, { opacity: 0, duration: 1, ease: 'power1.in' });
 }
 
 // Reset Webflow
@@ -93,12 +165,16 @@ function flipProjectImage(outgoingWrap, incomingWrap) {
 }
 
 //Hooks
+barba.hooks.once((data) => {
+  pageReset();
+});
 barba.hooks.beforeEnter((data) => {
-  setNavbar(data.next.container);
+  pageReset();
 });
 // Run after each page transition
 barba.hooks.afterEnter((data) => {
   window.scrollTo(0, 0);
+  pageReset();
 });
 barba.hooks.after((data) => {
   data.next.container.classList.remove('fixed');
