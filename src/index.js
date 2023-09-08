@@ -11,9 +11,10 @@ let typeSplit;
 let scroller;
 let mm = gsap.matchMedia();
 //GSAP Selectors
-// const SCROLL_TEXT = '[gsap-scroll="text"]';
+// const SCROLL_HEADING = '[gsap-scroll="text"]';
 const LOAD_H1 = '[gsap-load="h1"]';
 const LOAD_EL = '[gsap-load="el"]';
+const SCROLL_HEADING = '[gsap-scroll="heading"]';
 // Barba JS Global Variables
 const ACTIVE_CLASS = 'active-flip-item';
 const PROJECT_NAME = '[data-barba="project-name"]';
@@ -29,7 +30,7 @@ function runSplit(text) {
   });
   return typeSplit;
 }
-const headerLoad = function (data) {
+const loadHeader = function (data) {
   const h1 = data.next.container.querySelector(LOAD_H1);
   const elements = data.next.container.querySelectorAll(LOAD_EL);
   const splitText = runSplit(h1);
@@ -59,19 +60,20 @@ const headerLoad = function (data) {
     '-=.6'
   );
 };
-/*
-const textScrollIn = function (data) {
-  const items = data.next.container.querySelectorAll(SCROLL_TEXT);
+
+const scrollHeading = function (data) {
+  const items = data.next.container.querySelectorAll(SCROLL_HEADING);
   items.forEach((item) => {
     item.style.opacity = 1;
     const splitText = runSplit(item);
     console.log(splitText);
-    if (splitText) return;
+    if (!splitText) return;
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: item,
-        start: 'top 15%',
-        end: 'top 20%',
+        start: 'top 90%',
+        end: 'top 75%',
+        markers: true,
         scrub: 0.5,
       },
     });
@@ -86,70 +88,11 @@ const textScrollIn = function (data) {
         y: '0rem',
         duration: 0.8,
         ease: 'power2.out',
-        stagger: { each: 0.05, from: 'start' },
+        stagger: { each: 0.5, from: 'start' },
       }
     );
-    // create instance each time you enter the page
-    scroller = ScrollTrigger.create({
-      animation: tl,
-      trigger: item,
-      start: 'top 15%',
-      end: 'top 20%',
-      markers: true,
-      scrub: 0.5,
-      // toggleActions: 'play none none restart',
-    });
-    // Play the animation if the window is not being resized
-    // if (!pageResize) {
-    //   tl.play();
-    // }
   });
 };
-*/
-
-//////////////////////////////
-// Other Functions
-
-const countUp = function (data) {
-  const numberText = $('.count-span');
-  if (!numberText) return;
-  numberText.counterUp({
-    delay: 10,
-    time: 2000,
-  });
-};
-
-// Run these scripts on page reset
-const pageReset = function (data) {
-  mm.add(
-    {
-      //This is the conditions object
-      isMobile: '(max-width: 767px)',
-      isTablet: '(min-width: 768px)  and (max-width: 991px)',
-      isDesktop: '(min-width: 992px)',
-      reduceMotion: '(prefers-reduced-motion: reduce)',
-    },
-    (context) => {
-      let { isMobile, isTablet, isDesktop, reduceMotion } = context.conditions;
-      //Global Animations
-      headerLoad(data);
-      // textScrollIn(data);
-      setNavbar(data.next.container, isDesktop);
-      if (isMobile) {
-        //Run Mobile Code
-      }
-    }
-  );
-};
-
-// Update on window resize
-let windowWidth = window.innerWidth;
-window.addEventListener('resize', function () {
-  if (window.innerWidth !== windowWidth) {
-    windowWidth = window.innerWidth;
-    gsap.matchMediaRefresh();
-  }
-});
 
 const setNavbar = function (pageWrap, isDesktop) {
   const navbar = pageWrap.querySelector('.navbar_component');
@@ -178,7 +121,47 @@ const setNavbar = function (pageWrap, isDesktop) {
 };
 
 //////////////////////////////
-// Barba JS Page transitions
+// Other Functions
+
+const countUp = function (data) {
+  const numberText = $('.count-span');
+  if (!numberText) return;
+  numberText.counterUp({
+    delay: 10,
+    time: 2000,
+  });
+};
+
+// Run these scripts on page reset
+const gsapInit = function (data) {
+  mm.add(
+    {
+      //This is the conditions object
+      isMobile: '(max-width: 767px)',
+      isTablet: '(min-width: 768px)  and (max-width: 991px)',
+      isDesktop: '(min-width: 992px)',
+      reduceMotion: '(prefers-reduced-motion: reduce)',
+    },
+    (context) => {
+      let { isMobile, isTablet, isDesktop, reduceMotion } = context.conditions;
+      loadHeader(data);
+      scrollHeading(data);
+      setNavbar(data.next.container, isDesktop);
+    }
+  );
+};
+
+// Update on window resize
+let windowWidth = window.innerWidth;
+window.addEventListener('resize', function () {
+  if (window.innerWidth !== windowWidth) {
+    windowWidth = window.innerWidth;
+    gsap.matchMediaRefresh();
+  }
+});
+
+//////////////////////////////
+// Utility Functions for Barba JS
 
 //Create Scripts
 function appendScript(url) {
@@ -242,12 +225,15 @@ function flipProjectImage(outgoingWrap, incomingWrap) {
   Flip.from(state, { duration: 0.8, ease: 'power2.inOut' });
 }
 
+//////////////////////////////
+// Barba JS Page transitions
+
 //Hooks
 barba.hooks.once((data) => {
-  pageReset(data);
+  gsapInit(data);
 });
 // barba.hooks.beforeEnter((data) => {
-//   pageReset(data);
+//   gsapInit(data);
 // });
 // Run after each page transition
 barba.hooks.afterEnter((data) => {
@@ -261,7 +247,7 @@ barba.hooks.after((data) => {
   });
   window.scrollTo(0, 0);
   //add gsap interactions
-  pageReset(data);
+  gsapInit(data);
   resetWebflow(data);
   //kills scrolltrigger instances
   // instance.kill();

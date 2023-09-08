@@ -1631,6 +1631,7 @@
   var mm = gsap.matchMedia();
   var LOAD_H1 = '[gsap-load="h1"]';
   var LOAD_EL = '[gsap-load="el"]';
+  var SCROLL_HEADING = '[gsap-scroll="heading"]';
   var ACTIVE_CLASS = "active-flip-item";
   var PROJECT_NAME = '[data-barba="project-name"]';
   var PROJECT_IMAGE = '[data-barba="project-image"]';
@@ -1641,7 +1642,7 @@
     });
     return typeSplit;
   }
-  var headerLoad = function(data) {
+  var loadHeader = function(data) {
     const h1 = data.next.container.querySelector(LOAD_H1);
     const elements = data.next.container.querySelectorAll(LOAD_EL);
     const splitText = runSplit(h1);
@@ -1672,30 +1673,39 @@
       "-=.6"
     );
   };
-  var pageReset = function(data) {
-    mm.add(
-      {
-        isMobile: "(max-width: 767px)",
-        isTablet: "(min-width: 768px)  and (max-width: 991px)",
-        isDesktop: "(min-width: 992px)",
-        reduceMotion: "(prefers-reduced-motion: reduce)"
-      },
-      (context) => {
-        let { isMobile, isTablet, isDesktop, reduceMotion } = context.conditions;
-        headerLoad(data);
-        setNavbar(data.next.container, isDesktop);
-        if (isMobile) {
+  var scrollHeading = function(data) {
+    const items = data.next.container.querySelectorAll(SCROLL_HEADING);
+    items.forEach((item) => {
+      item.style.opacity = 1;
+      const splitText = runSplit(item);
+      console.log(splitText);
+      if (!splitText)
+        return;
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: item,
+          start: "top 90%",
+          end: "top 75%",
+          markers: true,
+          scrub: 0.5
         }
-      }
-    );
+      });
+      tl.fromTo(
+        splitText.words,
+        {
+          opacity: 0,
+          y: "2rem"
+        },
+        {
+          opacity: 1,
+          y: "0rem",
+          duration: 0.8,
+          ease: "power2.out",
+          stagger: { each: 0.5, from: "start" }
+        }
+      );
+    });
   };
-  var windowWidth = window.innerWidth;
-  window.addEventListener("resize", function() {
-    if (window.innerWidth !== windowWidth) {
-      windowWidth = window.innerWidth;
-      gsap.matchMediaRefresh();
-    }
-  });
   var setNavbar = function(pageWrap, isDesktop) {
     const navbar = pageWrap.querySelector(".navbar_component");
     let isTransparent;
@@ -1720,6 +1730,29 @@
       navbar.setAttribute("navbar-light", "false");
     }
   };
+  var gsapInit = function(data) {
+    mm.add(
+      {
+        isMobile: "(max-width: 767px)",
+        isTablet: "(min-width: 768px)  and (max-width: 991px)",
+        isDesktop: "(min-width: 992px)",
+        reduceMotion: "(prefers-reduced-motion: reduce)"
+      },
+      (context) => {
+        let { isMobile, isTablet, isDesktop, reduceMotion } = context.conditions;
+        loadHeader(data);
+        scrollHeading(data);
+        setNavbar(data.next.container, isDesktop);
+      }
+    );
+  };
+  var windowWidth = window.innerWidth;
+  window.addEventListener("resize", function() {
+    if (window.innerWidth !== windowWidth) {
+      windowWidth = window.innerWidth;
+      gsap.matchMediaRefresh();
+    }
+  });
   function appendScript(url) {
     const script = document.createElement("script");
     script.type = "text/javascript";
@@ -1764,7 +1797,7 @@
     Flip.from(state, { duration: 0.8, ease: "power2.inOut" });
   }
   import_core.default.hooks.once((data) => {
-    pageReset(data);
+    gsapInit(data);
   });
   import_core.default.hooks.afterEnter((data) => {
     window.scrollTo(0, 0);
@@ -1775,7 +1808,7 @@
       item.classList.remove(ACTIVE_CLASS);
     });
     window.scrollTo(0, 0);
-    pageReset(data);
+    gsapInit(data);
     resetWebflow(data);
   });
   import_core.default.init({
