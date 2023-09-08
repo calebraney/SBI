@@ -11,10 +11,11 @@ let typeSplit;
 let scroller;
 let mm = gsap.matchMedia();
 //GSAP Selectors
-// const SCROLL_HEADING = '[gsap-scroll="text"]';
 const LOAD_H1 = '[gsap-load="h1"]';
 const LOAD_EL = '[gsap-load="el"]';
 const SCROLL_HEADING = '[gsap-scroll="heading"]';
+const SCROLL_EL = '[gsap-scroll="el"]';
+const SCROLL_CONTAINER = '[gsap-scroll="container"]';
 // Barba JS Global Variables
 const ACTIVE_CLASS = 'active-flip-item';
 const PROJECT_NAME = '[data-barba="project-name"]';
@@ -24,12 +25,27 @@ const PROJECT_IMAGE_WRAP = '[data-barba="project-image-wrap"]';
 
 //////////////////////////////
 // GSAP Animations
+
+//split text utility
 function runSplit(text) {
   typeSplit = new SplitType(text, {
     types: 'lines, words',
   });
   return typeSplit;
 }
+
+//set global interaction defaults
+gsap.defaults({
+  duration: 0.6,
+  ease: 'power1.out',
+});
+ScrollTrigger.defaults({
+  start: 'top 90%',
+  end: 'top 75%',
+  markers: false,
+  scrub: 0.5,
+});
+
 const loadHeader = function (data) {
   const h1 = data.next.container.querySelector(LOAD_H1);
   const elements = data.next.container.querySelectorAll(LOAD_EL);
@@ -40,8 +56,6 @@ const loadHeader = function (data) {
   tl.from(splitText.words, {
     opacity: 0,
     y: '2rem',
-    duration: 0.6,
-    ease: 'power1.out',
     stagger: { each: 0.05, from: 'start' },
   });
   tl.fromTo(
@@ -53,8 +67,6 @@ const loadHeader = function (data) {
     {
       opacity: 1,
       y: '0rem',
-      duration: 0.6,
-      ease: 'power1.out',
       stagger: { each: 0.2, from: 'start' },
     },
     '-=.6'
@@ -66,15 +78,10 @@ const scrollHeading = function (data) {
   items.forEach((item) => {
     item.style.opacity = 1;
     const splitText = runSplit(item);
-    console.log(splitText);
     if (!splitText) return;
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: item,
-        start: 'top 90%',
-        end: 'top 75%',
-        markers: true,
-        scrub: 0.5,
       },
     });
     tl.fromTo(
@@ -86,9 +93,59 @@ const scrollHeading = function (data) {
       {
         opacity: 1,
         y: '0rem',
-        duration: 0.8,
-        ease: 'power2.out',
-        stagger: { each: 0.5, from: 'start' },
+        stagger: { each: 0.2, from: 'start' },
+      }
+    );
+  });
+};
+
+const scrollFade = function (data) {
+  const items = data.next.container.querySelectorAll(SCROLL_EL);
+  items.forEach((item) => {
+    item.style.opacity = 1;
+    if (!item) return;
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: item,
+      },
+    });
+    tl.fromTo(
+      item,
+      {
+        opacity: 0,
+        y: '2rem',
+      },
+      {
+        opacity: 1,
+        y: '0rem',
+      }
+    );
+  });
+};
+
+const scrollContainer = function (data) {
+  const items = data.next.container.querySelectorAll(SCROLL_CONTAINER);
+  items.forEach((item) => {
+    const children = gsap.utils.toArray(item.children);
+    if (children.length === 0) return;
+    console.log(children);
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: item,
+        // toggleActions: 'play none none none',
+        // scrub: none,
+      },
+    });
+    tl.fromTo(
+      children,
+      {
+        opacity: 0,
+        y: '2rem',
+      },
+      {
+        opacity: 1,
+        y: '0rem',
+        stagger: { each: 0.2, from: 'start' },
       }
     );
   });
@@ -146,6 +203,8 @@ const gsapInit = function (data) {
       let { isMobile, isTablet, isDesktop, reduceMotion } = context.conditions;
       loadHeader(data);
       scrollHeading(data);
+      scrollFade(data);
+      scrollContainer(data);
       setNavbar(data.next.container, isDesktop);
     }
   );
@@ -298,7 +357,6 @@ barba.init({
       sync: true,
       to: { namespace: ['home'] },
       once(data) {
-        // console.log('home once view');
         appendScript('https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsslider@1/cmsslider.js');
         // appendScript(
         //   'https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.0/jquery.waypoints.min.js'
@@ -308,10 +366,8 @@ barba.init({
       },
       enter(data) {
         defaultTransition(data);
-        // console.log('home enter transition');
       },
       after(data) {
-        // console.log('home after view');
         appendScript('https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsslider@1/cmsslider.js');
         // appendScript(
         //   'https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.0/jquery.waypoints.min.js'

@@ -1632,6 +1632,8 @@
   var LOAD_H1 = '[gsap-load="h1"]';
   var LOAD_EL = '[gsap-load="el"]';
   var SCROLL_HEADING = '[gsap-scroll="heading"]';
+  var SCROLL_EL = '[gsap-scroll="el"]';
+  var SCROLL_CONTAINER = '[gsap-scroll="container"]';
   var ACTIVE_CLASS = "active-flip-item";
   var PROJECT_NAME = '[data-barba="project-name"]';
   var PROJECT_IMAGE = '[data-barba="project-image"]';
@@ -1642,6 +1644,16 @@
     });
     return typeSplit;
   }
+  gsap.defaults({
+    duration: 0.6,
+    ease: "power1.out"
+  });
+  ScrollTrigger.defaults({
+    start: "top 90%",
+    end: "top 75%",
+    markers: false,
+    scrub: 0.5
+  });
   var loadHeader = function(data) {
     const h1 = data.next.container.querySelector(LOAD_H1);
     const elements = data.next.container.querySelectorAll(LOAD_EL);
@@ -1653,8 +1665,6 @@
     tl.from(splitText.words, {
       opacity: 0,
       y: "2rem",
-      duration: 0.6,
-      ease: "power1.out",
       stagger: { each: 0.05, from: "start" }
     });
     tl.fromTo(
@@ -1666,8 +1676,6 @@
       {
         opacity: 1,
         y: "0rem",
-        duration: 0.6,
-        ease: "power1.out",
         stagger: { each: 0.2, from: "start" }
       },
       "-=.6"
@@ -1678,16 +1686,11 @@
     items.forEach((item) => {
       item.style.opacity = 1;
       const splitText = runSplit(item);
-      console.log(splitText);
       if (!splitText)
         return;
       const tl = gsap.timeline({
         scrollTrigger: {
-          trigger: item,
-          start: "top 90%",
-          end: "top 75%",
-          markers: true,
-          scrub: 0.5
+          trigger: item
         }
       });
       tl.fromTo(
@@ -1699,9 +1702,57 @@
         {
           opacity: 1,
           y: "0rem",
-          duration: 0.8,
-          ease: "power2.out",
-          stagger: { each: 0.5, from: "start" }
+          stagger: { each: 0.2, from: "start" }
+        }
+      );
+    });
+  };
+  var scrollFade = function(data) {
+    const items = data.next.container.querySelectorAll(SCROLL_EL);
+    items.forEach((item) => {
+      item.style.opacity = 1;
+      if (!item)
+        return;
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: item
+        }
+      });
+      tl.fromTo(
+        item,
+        {
+          opacity: 0,
+          y: "2rem"
+        },
+        {
+          opacity: 1,
+          y: "0rem"
+        }
+      );
+    });
+  };
+  var scrollContainer = function(data) {
+    const items = data.next.container.querySelectorAll(SCROLL_CONTAINER);
+    items.forEach((item) => {
+      const children = gsap.utils.toArray(item.children);
+      if (children.length === 0)
+        return;
+      console.log(children);
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: item
+        }
+      });
+      tl.fromTo(
+        children,
+        {
+          opacity: 0,
+          y: "2rem"
+        },
+        {
+          opacity: 1,
+          y: "0rem",
+          stagger: { each: 0.2, from: "start" }
         }
       );
     });
@@ -1742,6 +1793,8 @@
         let { isMobile, isTablet, isDesktop, reduceMotion } = context.conditions;
         loadHeader(data);
         scrollHeading(data);
+        scrollFade(data);
+        scrollContainer(data);
         setNavbar(data.next.container, isDesktop);
       }
     );
