@@ -1633,7 +1633,6 @@
   var LOAD_EL = '[gsap-load="el"]';
   var ACTIVE_CLASS = "active-flip-item";
   var PROJECT_NAME = '[data-barba="project-name"]';
-  var PROJECT_TITLE = '[data-barba="project-title"]';
   var PROJECT_IMAGE = '[data-barba="project-image"]';
   var PROJECT_IMAGE_WRAP = '[data-barba="project-image-wrap"]';
   function runSplit(text) {
@@ -1673,15 +1672,6 @@
       "-=.6"
     );
   };
-  var countUp = function(data) {
-    const numberText = $(".count-span");
-    if (!numberText)
-      return;
-    numberText.counterUp({
-      delay: 10,
-      time: 2e3
-    });
-  };
   var pageReset = function(data) {
     mm.add(
       {
@@ -1693,7 +1683,6 @@
       (context) => {
         let { isMobile, isTablet, isDesktop, reduceMotion } = context.conditions;
         headerLoad(data);
-        textScrollIn(data);
         setNavbar(data.next.container, isDesktop);
         if (isMobile) {
         }
@@ -1716,14 +1705,14 @@
       isTransparent = false;
     }
     if (isTransparent && isDesktop) {
-      if (window.scrollY === 0) {
+      if (window.scrollY === 0 && isTransparent && isDesktop) {
         navbar.setAttribute("navbar-light", "true");
       }
       document.addEventListener("scroll", (event) => {
-        if (window.scrollY !== 0) {
+        if (window.scrollY !== 0 && isTransparent && isDesktop) {
           navbar.setAttribute("navbar-light", "false");
         }
-        if (window.scrollY === 0) {
+        if (window.scrollY === 0 && isTransparent && isDesktop) {
           navbar.setAttribute("navbar-light", "true");
         }
       });
@@ -1781,14 +1770,13 @@
     window.scrollTo(0, 0);
   });
   import_core.default.hooks.after((data) => {
-    pageReset(data);
     data.next.container.classList.remove("fixed");
     document.querySelectorAll(`.${ACTIVE_CLASS}`).forEach((item) => {
       item.classList.remove(ACTIVE_CLASS);
     });
     window.scrollTo(0, 0);
+    pageReset(data);
     resetWebflow(data);
-    instance.kill();
   });
   import_core.default.init({
     preventRunning: true,
@@ -1812,19 +1800,6 @@
             data.current.container.querySelector(`.${ACTIVE_CLASS} ${PROJECT_IMAGE_WRAP}`),
             data.next.container.querySelector(PROJECT_IMAGE_WRAP)
           );
-          gsap.from(data.next.container.querySelector(PROJECT_TITLE), {
-            opacity: 0,
-            y: "2rem",
-            ease: "power2.Out",
-            duration: 0.6
-          });
-          gsap.from(data.next.container.querySelector(".case-overview_component"), {
-            opacity: 0,
-            y: "2rem",
-            ease: "power2.Out",
-            delay: 0.2,
-            duration: 0.6
-          });
           return gsap.to(data.current.container, { opacity: 0, duration: 0.8 });
         }
       },
@@ -1832,26 +1807,13 @@
         sync: true,
         to: { namespace: ["home"] },
         once(data) {
-          console.log("home once view");
           appendScript("https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsslider@1/cmsslider.js");
-          appendScript(
-            "https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.0/jquery.waypoints.min.js"
-          );
-          appendScript("https://cdn.jsdelivr.net/npm/jquery.counterup@2.1.0/jquery.counterup.min.js");
-          countUp(data);
         },
         enter(data) {
           defaultTransition(data);
-          console.log("home enter transition");
         },
         after(data) {
-          console.log("home after view");
           appendScript("https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsslider@1/cmsslider.js");
-          appendScript(
-            "https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.0/jquery.waypoints.min.js"
-          );
-          appendScript("https://cdn.jsdelivr.net/npm/jquery.counterup@2.1.0/jquery.counterup.min.js");
-          countUp(data);
         }
       },
       {

@@ -11,7 +11,7 @@ let typeSplit;
 let scroller;
 let mm = gsap.matchMedia();
 //GSAP Selectors
-const SCROLL_TEXT = '[gsap-scroll="text"]';
+// const SCROLL_TEXT = '[gsap-scroll="text"]';
 const LOAD_H1 = '[gsap-load="h1"]';
 const LOAD_EL = '[gsap-load="el"]';
 // Barba JS Global Variables
@@ -133,7 +133,7 @@ const pageReset = function (data) {
       let { isMobile, isTablet, isDesktop, reduceMotion } = context.conditions;
       //Global Animations
       headerLoad(data);
-      textScrollIn(data);
+      // textScrollIn(data);
       setNavbar(data.next.container, isDesktop);
       if (isMobile) {
         //Run Mobile Code
@@ -161,14 +161,14 @@ const setNavbar = function (pageWrap, isDesktop) {
     isTransparent = false;
   }
   if (isTransparent && isDesktop) {
-    if (window.scrollY === 0) {
+    if (window.scrollY === 0 && isTransparent && isDesktop) {
       navbar.setAttribute('navbar-light', 'true');
     }
     document.addEventListener('scroll', (event) => {
-      if (window.scrollY !== 0) {
+      if (window.scrollY !== 0 && isTransparent && isDesktop) {
         navbar.setAttribute('navbar-light', 'false');
       }
-      if (window.scrollY === 0) {
+      if (window.scrollY === 0 && isTransparent && isDesktop) {
         navbar.setAttribute('navbar-light', 'true');
       }
     });
@@ -254,16 +254,17 @@ barba.hooks.afterEnter((data) => {
   window.scrollTo(0, 0);
 });
 barba.hooks.after((data) => {
-  pageReset(data);
   data.next.container.classList.remove('fixed');
   //remove active class
   document.querySelectorAll(`.${ACTIVE_CLASS}`).forEach((item) => {
     item.classList.remove(ACTIVE_CLASS);
   });
   window.scrollTo(0, 0);
+  //add gsap interactions
+  pageReset(data);
   resetWebflow(data);
   //kills scrolltrigger instances
-  instance.kill();
+  // instance.kill();
 });
 
 barba.init({
@@ -290,19 +291,19 @@ barba.init({
           data.current.container.querySelector(`.${ACTIVE_CLASS} ${PROJECT_IMAGE_WRAP}`),
           data.next.container.querySelector(PROJECT_IMAGE_WRAP)
         );
-        gsap.from(data.next.container.querySelector(PROJECT_TITLE), {
-          opacity: 0,
-          y: '2rem',
-          ease: 'power2.Out',
-          duration: 0.6,
-        });
-        gsap.from(data.next.container.querySelector('.case-overview_component'), {
-          opacity: 0,
-          y: '2rem',
-          ease: 'power2.Out',
-          delay: 0.2,
-          duration: 0.6,
-        });
+        // gsap.from(data.next.container.querySelector(PROJECT_TITLE), {
+        //   opacity: 0,
+        //   y: '2rem',
+        //   ease: 'power2.Out',
+        //   duration: 0.6,
+        // });
+        // gsap.from(data.next.container.querySelector('.case-overview_component'), {
+        //   opacity: 0,
+        //   y: '2rem',
+        //   ease: 'power2.Out',
+        //   delay: 0.2,
+        //   duration: 0.6,
+        // });
         return gsap.to(data.current.container, { opacity: 0, duration: 0.8 });
       },
     },
@@ -311,26 +312,26 @@ barba.init({
       sync: true,
       to: { namespace: ['home'] },
       once(data) {
-        console.log('home once view');
+        // console.log('home once view');
         appendScript('https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsslider@1/cmsslider.js');
-        appendScript(
-          'https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.0/jquery.waypoints.min.js'
-        );
-        appendScript('https://cdn.jsdelivr.net/npm/jquery.counterup@2.1.0/jquery.counterup.min.js');
-        countUp(data);
+        // appendScript(
+        //   'https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.0/jquery.waypoints.min.js'
+        // );
+        // appendScript('https://cdn.jsdelivr.net/npm/jquery.counterup@2.1.0/jquery.counterup.min.js');
+        // countUp(data);
       },
       enter(data) {
         defaultTransition(data);
-        console.log('home enter transition');
+        // console.log('home enter transition');
       },
       after(data) {
-        console.log('home after view');
+        // console.log('home after view');
         appendScript('https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsslider@1/cmsslider.js');
-        appendScript(
-          'https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.0/jquery.waypoints.min.js'
-        );
-        appendScript('https://cdn.jsdelivr.net/npm/jquery.counterup@2.1.0/jquery.counterup.min.js');
-        countUp(data);
+        // appendScript(
+        //   'https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.0/jquery.waypoints.min.js'
+        // );
+        // appendScript('https://cdn.jsdelivr.net/npm/jquery.counterup@2.1.0/jquery.counterup.min.js');
+        // countUp(data);
       },
     },
     {
