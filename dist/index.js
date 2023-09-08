@@ -388,11 +388,11 @@
           } catch (t3) {
             return Promise.reject(t3);
           }
-        }, $ = d, _ = { __proto__: null, update: L, nextTick: function() {
+        }, $2 = d, _ = { __proto__: null, update: L, nextTick: function() {
           return new Promise(function(t2) {
             window.requestAnimationFrame(t2);
           });
-        }, pathToRegexp: $ }, q = function() {
+        }, pathToRegexp: $2 }, q = function() {
           return window.location.origin;
         }, B = function(t2) {
           return void 0 === t2 && (t2 = window.location.href), U(t2).port;
@@ -507,7 +507,7 @@
             else {
               var n2 = Array.isArray(t3) ? t3 : [t3];
               this.P = n2.map(function(t4) {
-                return $(t4);
+                return $2(t4);
               });
             }
           }
@@ -1629,7 +1629,6 @@
   console.log("dev loaded");
   var typeSplit;
   var mm = gsap.matchMedia();
-  var SCROLL_TEXT = '[gsap-scroll="text"]';
   var LOAD_H1 = '[gsap-load="h1"]';
   var LOAD_EL = '[gsap-load="el"]';
   var ACTIVE_CLASS = "active-flip-item";
@@ -1654,7 +1653,7 @@
     tl.from(splitText.words, {
       opacity: 0,
       y: "2rem",
-      duration: 0.8,
+      duration: 0.6,
       ease: "power1.out",
       stagger: { each: 0.05, from: "start" }
     });
@@ -1667,43 +1666,20 @@
       {
         opacity: 1,
         y: "0rem",
-        duration: 0.8,
+        duration: 0.6,
         ease: "power1.out",
         stagger: { each: 0.2, from: "start" }
       },
       "-=.6"
     );
   };
-  var textScrollIn = function(data) {
-    const items = data.next.container.querySelectorAll(SCROLL_TEXT);
-    items.forEach((item) => {
-      item.style.opacity = 1;
-      const splitText = runSplit(item);
-      console.log(splitText);
-      if (splitText)
-        return;
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: item,
-          start: "top 15%",
-          end: "top 20%",
-          scrub: 0.5
-        }
-      });
-      tl.fromTo(
-        splitText.words,
-        {
-          opacity: 0,
-          y: "2rem"
-        },
-        {
-          opacity: 1,
-          y: "0rem",
-          duration: 0.8,
-          ease: "power2.out",
-          stagger: { each: 0.05, from: "start" }
-        }
-      );
+  var countUp = function(data) {
+    const numberText = $(".count-span");
+    if (!numberText)
+      return;
+    numberText.counterUp({
+      delay: 10,
+      time: 2e3
     });
   };
   var pageReset = function(data) {
@@ -1779,7 +1755,6 @@
     window.Webflow && window.Webflow.destroy();
     window.Webflow && window.Webflow.ready();
     window.Webflow && window.Webflow.require("ix2").init();
-    ScrollTrigger.clearScrollMemory();
   }
   function makeItemActive(data) {
     const cmsPageName = data.next.container.querySelector(PROJECT_NAME).textContent;
@@ -1802,20 +1777,18 @@
   import_core.default.hooks.once((data) => {
     pageReset(data);
   });
-  import_core.default.hooks.beforeEnter((data) => {
-    pageReset(data);
-  });
   import_core.default.hooks.afterEnter((data) => {
     window.scrollTo(0, 0);
-    pageReset(data);
   });
   import_core.default.hooks.after((data) => {
+    pageReset(data);
     data.next.container.classList.remove("fixed");
     document.querySelectorAll(`.${ACTIVE_CLASS}`).forEach((item) => {
       item.classList.remove(ACTIVE_CLASS);
     });
     window.scrollTo(0, 0);
     resetWebflow(data);
+    instance.kill();
   });
   import_core.default.init({
     preventRunning: true,
@@ -1859,13 +1832,26 @@
         sync: true,
         to: { namespace: ["home"] },
         once(data) {
+          console.log("home once view");
           appendScript("https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsslider@1/cmsslider.js");
+          appendScript(
+            "https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.0/jquery.waypoints.min.js"
+          );
+          appendScript("https://cdn.jsdelivr.net/npm/jquery.counterup@2.1.0/jquery.counterup.min.js");
+          countUp(data);
         },
         enter(data) {
           defaultTransition(data);
+          console.log("home enter transition");
         },
         after(data) {
+          console.log("home after view");
           appendScript("https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsslider@1/cmsslider.js");
+          appendScript(
+            "https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.0/jquery.waypoints.min.js"
+          );
+          appendScript("https://cdn.jsdelivr.net/npm/jquery.counterup@2.1.0/jquery.counterup.min.js");
+          countUp(data);
         }
       },
       {
@@ -1899,6 +1885,13 @@
         },
         after(data) {
           appendCMSFilters();
+        }
+      }
+    ],
+    views: [
+      {
+        namespace: "home",
+        once(data) {
         }
       }
     ]

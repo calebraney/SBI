@@ -39,7 +39,7 @@ const headerLoad = function (data) {
   tl.from(splitText.words, {
     opacity: 0,
     y: '2rem',
-    duration: 0.8,
+    duration: 0.6,
     ease: 'power1.out',
     stagger: { each: 0.05, from: 'start' },
   });
@@ -52,18 +52,14 @@ const headerLoad = function (data) {
     {
       opacity: 1,
       y: '0rem',
-      duration: 0.8,
+      duration: 0.6,
       ease: 'power1.out',
       stagger: { each: 0.2, from: 'start' },
     },
     '-=.6'
   );
-  // Play the animation if the window is not being resized
-  // if (!pageResize) {
-  //   tl.play();
-  // }
 };
-
+/*
 const textScrollIn = function (data) {
   const items = data.next.container.querySelectorAll(SCROLL_TEXT);
   items.forEach((item) => {
@@ -77,10 +73,8 @@ const textScrollIn = function (data) {
         start: 'top 15%',
         end: 'top 20%',
         scrub: 0.5,
-        // toggleActions: 'play none none restart',
       },
     });
-    // tl.set(item, { opacity: 1 });
     tl.fromTo(
       splitText.words,
       {
@@ -95,20 +89,33 @@ const textScrollIn = function (data) {
         stagger: { each: 0.05, from: 'start' },
       }
     );
+    // create instance each time you enter the page
+    scroller = ScrollTrigger.create({
+      animation: tl,
+      trigger: item,
+      start: 'top 15%',
+      end: 'top 20%',
+      markers: true,
+      scrub: 0.5,
+      // toggleActions: 'play none none restart',
+    });
     // Play the animation if the window is not being resized
     // if (!pageResize) {
     //   tl.play();
     // }
   });
 };
-const countUp = function () {
-  const numberText = document.querySelectorAll('.numbers_number');
-  if (numberText.length === 0) return;
-  numberText.forEach((number) => {
-    number.counterUp({
-      delay: 10,
-      time: 2000,
-    });
+*/
+
+//////////////////////////////
+// Other Functions
+
+const countUp = function (data) {
+  const numberText = $('.count-span');
+  if (!numberText) return;
+  numberText.counterUp({
+    delay: 10,
+    time: 2000,
   });
 };
 
@@ -143,9 +150,6 @@ window.addEventListener('resize', function () {
     gsap.matchMediaRefresh();
   }
 });
-
-//////////////////////////////
-// Other Functions
 
 const setNavbar = function (pageWrap, isDesktop) {
   const navbar = pageWrap.querySelector('.navbar_component');
@@ -208,7 +212,6 @@ function resetWebflow(data) {
   window.Webflow && window.Webflow.destroy();
   window.Webflow && window.Webflow.ready();
   window.Webflow && window.Webflow.require('ix2').init();
-  ScrollTrigger.clearScrollMemory();
 }
 
 function makeItemActive(data) {
@@ -243,15 +246,15 @@ function flipProjectImage(outgoingWrap, incomingWrap) {
 barba.hooks.once((data) => {
   pageReset(data);
 });
-barba.hooks.beforeEnter((data) => {
-  pageReset(data);
-});
+// barba.hooks.beforeEnter((data) => {
+//   pageReset(data);
+// });
 // Run after each page transition
 barba.hooks.afterEnter((data) => {
   window.scrollTo(0, 0);
-  pageReset(data);
 });
 barba.hooks.after((data) => {
+  pageReset(data);
   data.next.container.classList.remove('fixed');
   //remove active class
   document.querySelectorAll(`.${ACTIVE_CLASS}`).forEach((item) => {
@@ -259,6 +262,8 @@ barba.hooks.after((data) => {
   });
   window.scrollTo(0, 0);
   resetWebflow(data);
+  //kills scrolltrigger instances
+  instance.kill();
 });
 
 barba.init({
@@ -306,13 +311,26 @@ barba.init({
       sync: true,
       to: { namespace: ['home'] },
       once(data) {
+        console.log('home once view');
         appendScript('https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsslider@1/cmsslider.js');
+        appendScript(
+          'https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.0/jquery.waypoints.min.js'
+        );
+        appendScript('https://cdn.jsdelivr.net/npm/jquery.counterup@2.1.0/jquery.counterup.min.js');
+        countUp(data);
       },
       enter(data) {
         defaultTransition(data);
+        console.log('home enter transition');
       },
       after(data) {
+        console.log('home after view');
         appendScript('https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsslider@1/cmsslider.js');
+        appendScript(
+          'https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.0/jquery.waypoints.min.js'
+        );
+        appendScript('https://cdn.jsdelivr.net/npm/jquery.counterup@2.1.0/jquery.counterup.min.js');
+        countUp(data);
       },
     },
     {
@@ -350,6 +368,12 @@ barba.init({
       after(data) {
         appendCMSFilters();
       },
+    },
+  ],
+  views: [
+    {
+      namespace: 'home',
+      once(data) {},
     },
   ],
 });
