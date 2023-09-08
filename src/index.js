@@ -16,6 +16,7 @@ const LOAD_EL = '[gsap-load="el"]';
 const SCROLL_HEADING = '[gsap-scroll="heading"]';
 const SCROLL_EL = '[gsap-scroll="el"]';
 const SCROLL_CONTAINER = '[gsap-scroll="container"]';
+const SCROLL_LINE = '.line-fill';
 // Barba JS Global Variables
 const ACTIVE_CLASS = 'active-flip-item';
 const PROJECT_NAME = '[data-barba="project-name"]';
@@ -128,7 +129,6 @@ const scrollContainer = function (data) {
   items.forEach((item) => {
     const children = gsap.utils.toArray(item.children);
     if (children.length === 0) return;
-    console.log(children);
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: item,
@@ -146,6 +146,26 @@ const scrollContainer = function (data) {
         opacity: 1,
         y: '0rem',
         stagger: { each: 0.2, from: 'start' },
+      }
+    );
+  });
+};
+
+const scrollLine = function (data) {
+  const items = data.next.container.querySelectorAll(SCROLL_LINE);
+  items.forEach((item) => {
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: item,
+      },
+    });
+    tl.fromTo(
+      item,
+      {
+        width: '0%',
+      },
+      {
+        width: '100%',
       }
     );
   });
@@ -205,6 +225,7 @@ const gsapInit = function (data) {
       scrollHeading(data);
       scrollFade(data);
       scrollContainer(data);
+      scrollLine(data);
       setNavbar(data.next.container, isDesktop);
     }
   );
