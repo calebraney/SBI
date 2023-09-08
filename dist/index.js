@@ -1634,6 +1634,7 @@
   var SCROLL_HEADING = '[gsap-scroll="heading"]';
   var SCROLL_EL = '[gsap-scroll="el"]';
   var SCROLL_CONTAINER = '[gsap-scroll="container"]';
+  var SCROLL_LINE = ".line-fill";
   var ACTIVE_CLASS = "active-flip-item";
   var PROJECT_NAME = '[data-barba="project-name"]';
   var PROJECT_IMAGE = '[data-barba="project-image"]';
@@ -1737,7 +1738,6 @@
       const children = gsap.utils.toArray(item.children);
       if (children.length === 0)
         return;
-      console.log(children);
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: item
@@ -1753,6 +1753,25 @@
           opacity: 1,
           y: "0rem",
           stagger: { each: 0.2, from: "start" }
+        }
+      );
+    });
+  };
+  var scrollLine = function(data) {
+    const items = data.next.container.querySelectorAll(SCROLL_LINE);
+    items.forEach((item) => {
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: item
+        }
+      });
+      tl.fromTo(
+        item,
+        {
+          width: "0%"
+        },
+        {
+          width: "100%"
         }
       );
     });
@@ -1795,6 +1814,7 @@
         scrollHeading(data);
         scrollFade(data);
         scrollContainer(data);
+        scrollLine(data);
         setNavbar(data.next.container, isDesktop);
       }
     );
