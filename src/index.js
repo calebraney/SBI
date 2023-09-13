@@ -35,7 +35,7 @@ const runSplit = function (text) {
   });
   return typeSplit;
 };
-const scrollTL = function (item, toggleDefault = 'play none none none', scrubDefault = false) {
+const scrollTL = function (item, toggleDefault = 'play none none none', scrubDefault = true) {
   //get attribute and give it a default type to use as a format guide and backup in case of invalid value
   let toggleSetting = attr(toggleDefault, item.getAttribute('gsap-toggle-actions'));
   let scrubSetting = attr(scrubDefault, item.getAttribute('gsap-scrub'));
@@ -45,7 +45,7 @@ const scrollTL = function (item, toggleDefault = 'play none none none', scrubDef
       start: 'top 90%',
       end: 'top 75%',
       toggleActions: scrubSetting ? 'none none none none' : toggleSetting,
-      scrub: scrubSetting ? false : 0.5,
+      scrub: scrubSetting ? 0.5 : false,
     },
   });
   return tl;
