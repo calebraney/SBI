@@ -21,7 +21,6 @@ const SCROLL_REFRESH = '[scrolltrigger-refresh]';
 // Barba JS Global Variables
 const ACTIVE_CLASS = 'active-flip-item';
 const PROJECT_NAME = '[data-barba="project-name"]';
-const PROJECT_TITLE = '[data-barba="project-title"]';
 const PROJECT_IMAGE = '[data-barba="project-image"]';
 const PROJECT_IMAGE_WRAP = '[data-barba="project-image-wrap"]';
 
@@ -35,17 +34,27 @@ const runSplit = function (text) {
   });
   return typeSplit;
 };
-const scrollTL = function (item, toggleDefault = 'play none none none', scrubDefault = true) {
-  //get attribute and give it a default type to use as a format guide and backup in case of invalid value
-  let toggleSetting = attr(toggleDefault, item.getAttribute('gsap-toggle-actions'));
-  let scrubSetting = attr(scrubDefault, item.getAttribute('gsap-scrub'));
+
+const scrollTL = function (item) {
+  // default GSAP options
+  const defaults = {
+    toggleActions: 'play none none none',
+    scrub: true,
+    start: 'top 90%',
+    end: 'top 75%',
+  };
+  //override defaults if an attribute is present and a valid type.
+  defaults.toggleActions = attr(defaults.toggleActions, item.getAttribute('gsap-toggle-actions'));
+  defaults.scrub = attr(defaults.scrub, item.getAttribute('gsap-scrub'));
+  defaults.start = attr(defaults.start, item.getAttribute('gsap-scroll-start'));
+  defaults.end = attr(defaults.end, item.getAttribute('gsap-scroll-end'));
   const tl = gsap.timeline({
     scrollTrigger: {
       trigger: item,
-      start: 'top 90%',
-      end: 'top 75%',
-      toggleActions: scrubSetting ? 'none none none none' : toggleSetting,
-      scrub: scrubSetting ? 0.5 : false,
+      start: defaults.start,
+      end: defaults.end,
+      toggleActions: defaults.scrub ? 'none none none none' : defaults.toggleActions,
+      scrub: defaults.scrub ? 0.5 : false,
     },
   });
   return tl;
@@ -453,10 +462,10 @@ barba.init({
       },
     },
   ],
-  views: [
-    {
-      namespace: 'home',
-      once(data) {},
-    },
-  ],
+  // views: [
+  //   {
+  //     namespace: 'home',
+  //     once(data) {},
+  //   },
+  // ],
 });
