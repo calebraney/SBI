@@ -15,8 +15,8 @@ const LOAD_EL = '[gsap-load="el"]';
 const SCROLL_HEADING = '[gsap-scroll="heading"]';
 const SCROLL_EL = '[gsap-scroll="el"]';
 const SCROLL_CONTAINER = '[gsap-scroll="container"]';
-const SCROLL_LINE = '.line-fill';
-const SCROLL_NUMBER = '.number-span';
+const SCROLL_LINE = '[gsap-scroll="line"';
+const SCROLL_NUMBER = '[gsap-scroll="number"';
 const SCROLL_REFRESH = '[scrolltrigger-refresh]';
 // Barba JS Global Variables
 const ACTIVE_CLASS = 'active-flip-item';
