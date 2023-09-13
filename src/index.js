@@ -156,13 +156,7 @@ const scrollContainer = function (data) {
 const scrollLine = function (data) {
   const items = data.next.container.querySelectorAll(SCROLL_LINE);
   items.forEach((item) => {
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: item,
-        scrub: false,
-        toggleActions: 'play none none none',
-      },
-    });
+    const tl = scrollTL(item);
     tl.fromTo(
       item,
       {
