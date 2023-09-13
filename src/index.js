@@ -1,7 +1,6 @@
 import barba from '@barba/core';
 import SplitType from 'split-type';
-
-console.log('dev loaded');
+import { CountUp } from 'countup.js';
 
 //////////////////////////////
 // Global Variables
@@ -17,6 +16,8 @@ const SCROLL_HEADING = '[gsap-scroll="heading"]';
 const SCROLL_EL = '[gsap-scroll="el"]';
 const SCROLL_CONTAINER = '[gsap-scroll="container"]';
 const SCROLL_LINE = '.line-fill';
+const SCROLL_NUMBER = '.number-span';
+const SCROLL_REFRESH = '[scrolltrigger-refresh]';
 // Barba JS Global Variables
 const ACTIVE_CLASS = 'active-flip-item';
 const PROJECT_NAME = '[data-barba="project-name"]';
@@ -28,24 +29,39 @@ const PROJECT_IMAGE_WRAP = '[data-barba="project-image-wrap"]';
 // GSAP Animations
 
 //split text utility
-function runSplit(text) {
+const runSplit = function (text) {
   typeSplit = new SplitType(text, {
     types: 'lines, words',
   });
   return typeSplit;
-}
+};
+const scrollTL = function (item, toggleDefault = 'play none none none', scrubDefault = false) {
+  //get attribute and give it a default type to use as a format guide and backup in case of invalid value
+  let toggleSetting = attr(toggleDefault, item.getAttribute('gsap-toggle-actions'));
+  let scrubSetting = attr(scrubDefault, item.getAttribute('gsap-scrub'));
+  const tl = gsap.timeline({
+    scrollTrigger: {
+      trigger: item,
+      start: 'top 90%',
+      end: 'top 75%',
+      toggleActions: scrubSetting ? 'none none none none' : toggleSetting,
+      scrub: scrubSetting ? false : 0.5,
+    },
+  });
+  return tl;
+};
 
 //set global interaction defaults
 gsap.defaults({
   duration: 0.6,
   ease: 'power1.out',
 });
-ScrollTrigger.defaults({
-  start: 'top 90%',
-  end: 'top 75%',
-  markers: false,
-  scrub: 0.5,
-});
+// ScrollTrigger.defaults({
+//   start: 'top 90%',
+//   end: 'top 75%',
+//   markers: false,
+//   scrub: 0.5,
+// });
 
 const loadHeader = function (data) {
   const h1 = data.next.container.querySelector(LOAD_H1);
@@ -80,11 +96,7 @@ const scrollHeading = function (data) {
     item.style.opacity = 1;
     const splitText = runSplit(item);
     if (!splitText) return;
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: item,
-      },
-    });
+    const tl = scrollTL(item);
     tl.fromTo(
       splitText.words,
       {
@@ -105,11 +117,7 @@ const scrollFade = function (data) {
   items.forEach((item) => {
     item.style.opacity = 1;
     if (!item) return;
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: item,
-      },
-    });
+    const tl = scrollTL(item);
     tl.fromTo(
       item,
       {
@@ -129,13 +137,7 @@ const scrollContainer = function (data) {
   items.forEach((item) => {
     const children = gsap.utils.toArray(item.children);
     if (children.length === 0) return;
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: item,
-        // toggleActions: 'play none none none',
-        // scrub: none,
-      },
-    });
+    const tl = scrollTL(item);
     tl.fromTo(
       children,
       {
@@ -157,6 +159,8 @@ const scrollLine = function (data) {
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: item,
+        scrub: false,
+        toggleActions: 'play none none none',
       },
     });
     tl.fromTo(
@@ -166,8 +170,23 @@ const scrollLine = function (data) {
       },
       {
         width: '100%',
+        duration: 1,
+        ease: 'power2.out',
       }
     );
+  });
+};
+
+// add event listeners to any items that change page height.
+const scrollRefresh = function (data) {
+  const items = data.next.container.querySelectorAll(SCROLL_REFRESH);
+  items.forEach((item) => {
+    item.addEventListener('click', (event) => {
+      ScrollTrigger.refresh();
+      setTimeout(() => {
+        ScrollTrigger.refresh();
+      }, 800);
+    });
   });
 };
 
@@ -201,12 +220,37 @@ const setNavbar = function (pageWrap, isDesktop) {
 // Other Functions
 
 const countUp = function (data) {
-  const numberText = $('.count-span');
-  if (!numberText) return;
-  numberText.counterUp({
-    delay: 10,
-    time: 2000,
+  const items = data.next.container.querySelectorAll(SCROLL_NUMBER);
+  items.forEach((item) => {
+    const number = +item.textContent;
+    if (!number || Number.isNaN(number)) return;
+    const countUp = new CountUp(item, number, {
+      useGrouping: false,
+      duration: 3.0,
+    });
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: item,
+        start: 'top bottom',
+        end: 'top 10%',
+        scrub: 1,
+        onEnter: () => {
+          countUp.start();
+        },
+      },
+    });
   });
+};
+
+// attribute value checker
+const attr = function (defaultVal, attrVal) {
+  const defaultValType = typeof defaultVal;
+  if (typeof attrVal !== 'string' || attrVal.trim() === '') return defaultVal;
+  if (attrVal === 'true' && defaultValType === 'boolean') return true;
+  if (attrVal === 'false' && defaultValType === 'boolean') return false;
+  if (isNaN(attrVal) && defaultValType === 'string') return attrVal;
+  if (!isNaN(attrVal) && defaultValType === 'number') return +attrVal;
+  return defaultVal;
 };
 
 // Run these scripts on page reset
@@ -226,6 +270,7 @@ const gsapInit = function (data) {
       scrollFade(data);
       scrollContainer(data);
       scrollLine(data);
+      scrollRefresh(data);
       setNavbar(data.next.container, isDesktop);
     }
   );
@@ -312,9 +357,6 @@ function flipProjectImage(outgoingWrap, incomingWrap) {
 barba.hooks.once((data) => {
   gsapInit(data);
 });
-// barba.hooks.beforeEnter((data) => {
-//   gsapInit(data);
-// });
 // Run after each page transition
 barba.hooks.afterEnter((data) => {
   window.scrollTo(0, 0);
@@ -329,8 +371,6 @@ barba.hooks.after((data) => {
   //add gsap interactions
   gsapInit(data);
   resetWebflow(data);
-  //kills scrolltrigger instances
-  // instance.kill();
 });
 
 barba.init({
@@ -357,19 +397,6 @@ barba.init({
           data.current.container.querySelector(`.${ACTIVE_CLASS} ${PROJECT_IMAGE_WRAP}`),
           data.next.container.querySelector(PROJECT_IMAGE_WRAP)
         );
-        // gsap.from(data.next.container.querySelector(PROJECT_TITLE), {
-        //   opacity: 0,
-        //   y: '2rem',
-        //   ease: 'power2.Out',
-        //   duration: 0.6,
-        // });
-        // gsap.from(data.next.container.querySelector('.case-overview_component'), {
-        //   opacity: 0,
-        //   y: '2rem',
-        //   ease: 'power2.Out',
-        //   delay: 0.2,
-        //   duration: 0.6,
-        // });
         return gsap.to(data.current.container, { opacity: 0, duration: 0.8 });
       },
     },
@@ -379,30 +406,28 @@ barba.init({
       to: { namespace: ['home'] },
       once(data) {
         appendScript('https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsslider@1/cmsslider.js');
-        // appendScript(
-        //   'https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.0/jquery.waypoints.min.js'
-        // );
-        // appendScript('https://cdn.jsdelivr.net/npm/jquery.counterup@2.1.0/jquery.counterup.min.js');
-        // countUp(data);
+        countUp(data);
       },
       enter(data) {
         defaultTransition(data);
       },
       after(data) {
         appendScript('https://cdn.jsdelivr.net/npm/@finsweet/attributes-cmsslider@1/cmsslider.js');
-        // appendScript(
-        //   'https://cdnjs.cloudflare.com/ajax/libs/waypoints/4.0.0/jquery.waypoints.min.js'
-        // );
-        // appendScript('https://cdn.jsdelivr.net/npm/jquery.counterup@2.1.0/jquery.counterup.min.js');
-        // countUp(data);
+        countUp(data);
       },
     },
     {
       // About Page Transition
       sync: true,
       to: { namespace: ['about'] },
+      once(data) {
+        countUp(data);
+      },
       enter(data) {
         defaultTransition(data);
+      },
+      after(data) {
+        countUp(data);
       },
     },
     {
